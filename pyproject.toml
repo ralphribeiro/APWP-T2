@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "apwp-t2"
+version = "0.1.0"
+description = ""
+authors = ["ralphribeiro <ralph_ribeiro@msn.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+pylama = "^7.7.1"
+radon = "^4.5.0"
+pytest = "^6.2.3"
+
+[tool.poetry.dev-dependencies]
+autopep8 = "^1.5.6"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,22 @@
+@startuml
+
+class LinhaPedido
+{
+    id_pedido
+    sku
+    qtd
+}
+
+class Lote
+{
+    ref
+    sku
+    eta
+    _qtd_comprada
+    _alocacoes    
+}
+
+Lote o- LinhaPedido
+
+
+@enduml
