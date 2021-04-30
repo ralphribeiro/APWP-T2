@@ -7,16 +7,17 @@ class SemEstoque(Exception):
     ...
 
 
-@dataclass(frozen=True)
+@dataclass(unsafe_hash=True)
 class LinhaPedido:
-    id_perdido: str
+    pedido_id: str
     sku: str
     qtd: int
 
 
 class Lote:
     def __init__(
-        self, ref: str,
+        self,
+        ref: str,
         sku: str,
         qtd: int,
         eta: Optional[date]
@@ -33,6 +34,11 @@ class Lote:
         if other.eta is None:
             return True
         return self.eta > other.eta
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, Lote):
+            return False
+        return self.ref == other.ref
 
     def alocar(self, linha: LinhaPedido):
         self._alocacoes.add(linha)
@@ -63,4 +69,3 @@ def alocar(linha: LinhaPedido, lotes: list[Lote]) -> str:
         lote.alocar(linha)
 
     return lote.ref
-    

@@ -2,7 +2,7 @@
 
 class LinhaPedido
 {
-    id_pedido
+    pedido_id
     sku
     qtd
 }
