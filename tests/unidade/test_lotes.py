@@ -39,3 +39,9 @@ def test_desalocar_linha_somente_se_alocada():
     lote, linha_a_desalocar = faz_lote_e_linha('BOLA-CRISTAL', 10, 2)
     lote.desalocar(linha_a_desalocar)
     assert lote.quantidade_disponivel == 10
+
+def test_alocacao_idempotente():
+    lote, linha = faz_lote_e_linha('BOLA-CRISTAL', 10, 2)
+    lote.alocar(linha)
+    lote.alocar(linha)
+    assert lote.quantidade_alocada == 2
