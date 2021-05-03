@@ -31,7 +31,7 @@ alocacoes = Table(
     metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('pedido_id', ForeignKey('linhas_pedido.id')),
-    Column('id_lote', ForeignKey('lotes.id')),
+    Column('lote_id', ForeignKey('lotes.id')),
 )
 
 

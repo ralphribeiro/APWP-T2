@@ -28,6 +28,9 @@ class Lote:
         self._qtd_comprada = qtd
         self._alocacoes: set[LinhaPedido] = set()
 
+    def __repr__(self) -> str:
+        return f'<lote {self.ref}>'
+
     def __gt__(self, other):
         if self.eta is None:
             return False
@@ -39,6 +42,9 @@ class Lote:
         if not isinstance(other, Lote):
             return False
         return self.ref == other.ref
+
+    def __hash__(self) -> int:
+        return hash(self.ref)
 
     def alocar(self, linha: LinhaPedido):
         self._alocacoes.add(linha)
