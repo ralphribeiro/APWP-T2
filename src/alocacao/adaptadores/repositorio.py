@@ -18,11 +18,11 @@ class SQLAlchemyRepositorio(RepositorioAbstrato):
     def __init__(self, session) -> None:
         self.session = session
 
-    def insere(self, lote: modelo.Lote):
+    def add(self, lote: modelo.Lote):
         self.session.add(lote)
 
-    def obtem(self, referencia) -> modelo.Lote:
-        return self.session.query(modelo.Lote).filter_by(reference=referencia).one()
+    def get(self, ref) -> modelo.Lote:
+        return self.session.query(modelo.Lote).filter_by(ref=ref).one()
 
-    def lista(self):
+    def list_all(self):
         return self.session.query(modelo.Lote).all()
