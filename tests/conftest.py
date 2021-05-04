@@ -47,6 +47,14 @@ def wait_for_webapp_to_come_up():
     pytest.fail('API never came up')
 
 
+@pytest.fixture(scope="session")
+def postgres_db():
+    engine = create_engine(config.get_postgres_uri())
+    wait_for_postgres_to_come_up(engine)
+    metadata.create_all(engine)
+    return engine
+
+
 @pytest.fixture
 def postgres_session(postgres_db):
     start_mappers()

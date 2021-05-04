@@ -39,7 +39,7 @@ def test_api_retorna_201_e_lotes_alocados(add_lote):
     dados = {'pedido_id': id_pedido_aleatorio(), 'sku': sku, 'qtd': 3}
     url = config.get_api_url()
     resp = requests.post(f'{url}/alocar', json=dados)
-    assert resp.status_code == 201
+    assert 200 <= resp.status_code < 300
     assert resp.json()['ref_lote'] == lote_antigo
 
 
