@@ -1,0 +1,45 @@
+version: "3"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: alocacao-imagem
+    environment:
+      - DB_HOST=postgres
+      - DB_PASSWORD=abc123
+      - API_HOST=api
+      - PYTHONDONTWRITEBYTECODE=1
+      - FLASK_APP=alocacao/aplicacao/flask_app.py
+      - FLASK_DEBUG=1
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./src:/src
+      - ./tests:/tests
+    entrypoint:
+      - flask
+      - run
+      - --host=0.0.0.0
+      - --port=80
+    ports:
+      - "5005:80"
+
+  postgres:
+    image: postgres
+    environment:
+      - POSTGRES_USER=alocacao
+      - POSTGRES_PASSWORD=abc123
+    ports:
+      - "54321:5432"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: alocacao@admin.com
+      PGADMIN_DEFAULT_PASSWORD: abc123
+      PGADMIN_LISTEN_PORT: 5050
+    depends_on:
+      - postgres
+    ports:
+      - "5050:5050"    
