@@ -33,14 +33,14 @@ class SQLAlchemyRepositorio(RepositorioAbstrato):  # adaptador
 
 
 class FalsoRepositorio(RepositorioAbstrato):  # adaptador
-    def __init__(self, lotes):
-        self._lotes = set(lotes)
+    def __init__(self):
+        self._lotes = set()
 
     def add(self, lote: modelo.Lote):
         self._lotes.add(lote)
 
     def get(self, ref) -> modelo.Lote:
-        return next(l for l in self._lotes if l == ref)
+        return next(lote for lote in self._lotes if lote.ref == ref)
 
     def list_all(self) -> list[modelo.Lote]:
         return list(self._lotes)
