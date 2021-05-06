@@ -17,8 +17,9 @@ def adiciona_lote(
     uow: uow.AbstractUOW
 ):
     lote = modelo.Lote(lote_ref, sku, qtd, eta)
-    uow.lotes.add(lote)
-    uow.commit()
+    with uow:
+        uow.lotes.add(lote)
+        uow.commit()
 
 
 def sku_valido(sku, lotes) -> bool:
@@ -31,10 +32,11 @@ def alocar(
     qtd: int,
     uow: uow.AbstractUOW
 ) -> str:
-    lotes = uow.lotes.list_all()
-    if not sku_valido(sku, lotes):
-        raise SkuInvalido(f'Sku inválido {sku}')
-    linha = modelo.LinhaPedido(pedido_id, sku, qtd)
-    ref_lote = modelo.alocar(linha, lotes)
-    uow.commit()
+    with uow:
+        lotes = uow.lotes.list_all()
+        if not sku_valido(sku, lotes):
+            raise SkuInvalido(f'Sku inválido {sku}')
+        linha = modelo.LinhaPedido(pedido_id, sku, qtd)
+        ref_lote = modelo.alocar(linha, lotes)
+        uow.commit()
     return ref_lote

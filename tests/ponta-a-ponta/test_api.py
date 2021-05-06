@@ -1,27 +1,12 @@
 from datetime import date, timedelta
-from src.alocacao.camada_servicos import servicos
-from uuid import uuid4
 
 import pytest
 import requests
 
 from src.alocacao import config
-
-
-def sufixo_aleatorio():
-    return uuid4().hex[:6]
-
-
-def sku_aleatorio(sufixo=None):
-    return f'{sufixo}-{sufixo_aleatorio()}'
-
-
-def ref_lote_aleatorio(sufixo=None):
-    return f'{sufixo}-{sufixo_aleatorio()}'
-
-
-def id_pedido_aleatorio(sufixo=None):
-    return f'{sufixo}-{sufixo_aleatorio()}'
+from tests.suporte_testes import (
+    ref_lote_aleatorio, sku_aleatorio, id_pedido_aleatorio
+)
 
 
 @pytest.mark.usefixtures('restart_api')
