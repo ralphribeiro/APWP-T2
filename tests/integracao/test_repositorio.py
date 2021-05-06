@@ -1,5 +1,5 @@
 from src.alocacao.dominio import modelo
-from src.alocacao.adaptadores import repositorio
+from src.alocacao.adapters import repository
 
 
 def insere_linha_pedido(session):
@@ -46,7 +46,7 @@ def insere_alocacao(session, id_linha, id_lote):
 def test_repositorio_pode_salvar_um_lote(session):
     lote = modelo.Lote('lote-001', 'COLHER-PEQUENA', 100, eta=None)
 
-    repo = repositorio.SQLAlchemyRepositorio(session)
+    repo = repository.SQLAlchemyRepository(session)
     repo.add(lote)
     session.commit()
 
@@ -63,7 +63,7 @@ def test_repositorio_pode_retornar_um_lote_com_alocacoes(session):
     id_al = insere_alocacao(session, id_linha, id_lote1)
     assert id_linha
 
-    repo = repositorio.SQLAlchemyRepositorio(session)
+    repo = repository.SQLAlchemyRepository(session)
     retorno = repo.get('lote-002')
 
     esperado = modelo.Lote('lote-002', 'TECLADO-RGB', 100, None)
@@ -80,7 +80,7 @@ def test_repositorio_pode_salvar_lote_com_alocacao(session):
     lote = modelo.Lote('lote-123', 'CARREGADOR', 100, None)
     modelo.alocar(linha, [lote])
 
-    repo = repositorio.SQLAlchemyRepositorio(session)
+    repo = repository.SQLAlchemyRepository(session)
     repo.add(lote)
     session.commit()
 
@@ -102,7 +102,7 @@ def test_repositorio_pode_retornar_lotes(session):
     for i in range(10):
         insere_lote(session, f'ped-00{i}')
 
-    repo = repositorio.SQLAlchemyRepositorio(session)
+    repo = repository.SQLAlchemyRepository(session)
     retorno = repo.list_all()
 
     for i, ret in enumerate(retorno):

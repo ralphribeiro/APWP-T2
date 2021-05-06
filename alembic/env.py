@@ -6,7 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 
 
-from src.alocacao.adaptadores.orm import metadata
+from src.alocacao.adapters.orm import metadata
 from src.alocacao.config import get_postgres_uri
 
 # this is the Alembic Config object, which provides

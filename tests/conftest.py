@@ -9,7 +9,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, clear_mappers
 
 from src.alocacao import config
-from src.alocacao.adaptadores.orm import metadata, start_mappers
+from src.alocacao.adapters.orm import metadata, start_mappers
 
 
 @pytest.fixture
@@ -63,46 +63,7 @@ def postgres_session(postgres_db):
 
 
 @pytest.fixture
-def add_lote(postgres_session):
-    lotes_adicionados = set()
-    skus_adicionados = set()
-
-    def _add_lote(linhas):
-        for ref, sku, qtd, eta in linhas:
-            postgres_session.execute(
-                'INSERT INTO lotes (ref, sku, _qtd_comprada, eta) '
-                'VALUES (:ref, :sku, :qtd, :eta)',
-                dict(ref=ref, sku=sku, qtd=qtd, eta=eta)
-            )
-            [[lote_id]] = postgres_session.execute(
-                'SELECT id FROM lotes WHERE ref=:ref AND sku=:sku',
-                dict(ref=ref, sku=sku)
-            )
-            lotes_adicionados.add(lote_id)
-            skus_adicionados.add(sku)
-        postgres_session.commit()
-
-    yield _add_lote
-
-    for lote_id in lotes_adicionados:
-        postgres_session.execute(
-            'DELETE FROM alocacoes WHERE lote_id=:lote_id',
-            dict(lote_id=lote_id)
-        )
-        postgres_session.execute(
-            'DELETE FROM lotes WHERE id=:lote_id',
-            dict(lote_id=lote_id)
-        )
-    for sku in skus_adicionados:
-        postgres_session.execute(
-            'DELETE FROM linhas_pedido WHERE sku=:sku',
-            dict(sku=sku)
-        )
-    postgres_session.commit()
-
-
-@pytest.fixture
 def restart_api():
-    (Path(__file__).parent / 'flask_app.py').touch()
+    (Path(__file__).parent / '../src/alocacao/aplicacao/flask_app.py').touch()
     time.sleep(0.5)
     wait_for_webapp_to_come_up()

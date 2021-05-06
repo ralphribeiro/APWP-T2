@@ -94,10 +94,13 @@ def test_mapeador_alocacao_pode_salvar_alocacao(session):
     session.commit()
 
     [[id_al]] = session.execute(
-        'SELECT al.id FROM alocacoes AS al JOIN '
-        'linhas_pedido AS lp JOIN '
-        'lotes as lt WHERE '
-        'al.pedido_id = al.id AND '
-        'al.lote_id = lt.id'
+        'SELECT al.id FROM alocacoes AS al '
+        'JOIN lotes as lt '
+        'JOIN linhas_pedido AS lp '
+        'ON al.lote_id = lt.id '
+        'AND al.pedido_id = lp.id '
+        'WHERE lt.ref = "lote2" '
+        'AND lp.pedido_id = "pedido2" '
+        'AND lp.sku = "BOLA"'
     )
     assert id_al

@@ -4,7 +4,7 @@ from abc import abstractmethod
 from src.alocacao.dominio import modelo
 
 
-class RepositorioAbstrato():  # porta
+class AbstractRepository():  # porta
     @abstractmethod
     def add(self, lote: modelo.Lote):
         ...
@@ -18,7 +18,7 @@ class RepositorioAbstrato():  # porta
         ...
 
 
-class SQLAlchemyRepositorio(RepositorioAbstrato):  # adaptador
+class SQLAlchemyRepository(AbstractRepository):  # adaptador
     def __init__(self, session) -> None:
         self.session = session
 
@@ -32,7 +32,7 @@ class SQLAlchemyRepositorio(RepositorioAbstrato):  # adaptador
         return self.session.query(modelo.Lote).all()
 
 
-class FalsoRepositorio(RepositorioAbstrato):  # adaptador
+class FakeRepository(AbstractRepository):  # adaptador
     def __init__(self):
         self._lotes = set()
 
