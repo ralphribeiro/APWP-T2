@@ -1,7 +1,7 @@
 from pytest import raises
 
 from tests.conftest import session_factory
-from src.alocacao.camada_servicos import uow
+from src.alocacao.camada_servicos import unit_of_work
 from src.alocacao.dominio import modelo
 
 
@@ -39,9 +39,9 @@ def obtem_ref_lote_alocado(session, pedido_id, sku):
 
 
 def test_rolls_back_por_padrao_em_um_uow_sem_commit(session_factory):
-    uow_ = uow.SQLAlchemyUOW(session_factory)
-    with uow_:
-        insere_lote(uow_.session, 'lote-00', 'MOUSE', 10, None)
+    uow = unit_of_work.SQLAlchemyUOW(session_factory)
+    with uow:
+        insere_lote(uow.session, 'lote-00', 'MOUSE', 10, None)
 
     new_session = session_factory()
 
@@ -55,13 +55,13 @@ def test_rolls_back_no_erro(session_factory):
     class ExceptionTest(Exception):
         ...
 
-    uow_ = uow.SQLAlchemyUOW(session_factory)
+    uow = unit_of_work.SQLAlchemyUOW(session_factory)
     with raises(ExceptionTest):
-        with uow_:
-            insere_lote(uow_.session, 'lote-11', 'TECLADO', 12, None)
+        with uow:
+            insere_lote(uow.session, 'lote-11', 'TECLADO', 12, None)
             raise ExceptionTest()
 
-    lotes = list(uow_.session.execute(
+    lotes = list(uow.session.execute(
         'SELECT * FROM lotes'
     ))
     assert lotes == []
@@ -72,12 +72,12 @@ def test_uow_pode_retornar_um_lote_e_alocá_lo(session_factory):
     insere_lote(session, 'lote-22', 'MONITOR', 12, None)
     session.commit()
 
-    uow_ = uow.SQLAlchemyUOW(session_factory)
-    with uow_:
-        lote = uow_.lotes.get('lote-22')
+    uow = unit_of_work.SQLAlchemyUOW(session_factory)
+    with uow:
+        lote = uow.lotes.get('lote-22')
         linha = modelo.LinhaPedido('pedido-22', 'MONITOR', 1)
         lote.alocar(linha)
-        uow_.commit()
+        uow.commit()
 
     lote_ref = obtem_ref_lote_alocado(session, 'pedido-22', 'MONITOR')
     assert lote_ref == 'lote-22'

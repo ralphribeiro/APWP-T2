@@ -2,7 +2,7 @@ from datetime import date
 from typing import Optional
 
 from src.alocacao.dominio import modelo
-from src.alocacao.camada_servicos import uow
+from src.alocacao.camada_servicos import unit_of_work
 
 
 class SkuInvalido(Exception):
@@ -14,29 +14,28 @@ def adiciona_lote(
     sku: str,
     qtd: int,
     eta: Optional[date],
-    uow: uow.AbstractUOW
+    uow: unit_of_work.AbstractUOW
 ):
-    lote = modelo.Lote(lote_ref, sku, qtd, eta)
     with uow:
-        uow.lotes.add(lote)
+        produto = uow.produtos.get(sku)
+        if produto is None:
+            produto = modelo.Produto(sku, lotes=[])
+            uow.produtos.add(produto)
+        produto.lotes.append(modelo.Lote(lote_ref, sku, qtd, eta))
         uow.commit()
-
-
-def sku_valido(sku, lotes) -> bool:
-    return sku in {lote.sku for lote in lotes}
 
 
 def alocar(
     pedido_id: str,
     sku: str,
     qtd: int,
-    uow: uow.AbstractUOW
+    uow: unit_of_work.AbstractUOW
 ) -> str:
+    linha = modelo.LinhaPedido(pedido_id, sku, qtd)
     with uow:
-        lotes = uow.lotes.list_all()
-        if not sku_valido(sku, lotes):
+        produto = uow.produtos.get(sku=sku)
+        if produto is None:
             raise SkuInvalido(f'Sku inválido {sku}')
-        linha = modelo.LinhaPedido(pedido_id, sku, qtd)
-        ref_lote = modelo.alocar(linha, lotes)
+        ref_lote = produto.alocar(linha)
         uow.commit()
     return ref_lote

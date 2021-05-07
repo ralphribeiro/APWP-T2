@@ -6,7 +6,7 @@ from src.alocacao.config import DEFAULT_SESSION_FACTORY
 
 
 class AbstractUOW(abc.ABC):
-    lotes: repository.AbstractRepository
+    produtos: repository.AbstractRepository
 
     def __enter__(self) -> AbstractUOW:
         return self
@@ -29,7 +29,7 @@ class SQLAlchemyUOW(AbstractUOW):
 
     def __enter__(self):
         self.session = self.session_factory()
-        self.lotes = repository.SQLAlchemyRepository(self.session)
+        self.produtos = repository.SQLAlchemyRepository(self.session)
         return super().__enter__()
 
     def __exit__(self, *args):

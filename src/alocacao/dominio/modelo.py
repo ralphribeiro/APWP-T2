@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 from typing import Optional
@@ -5,6 +6,24 @@ from typing import Optional
 
 class SemEstoque(Exception):
     ...
+
+
+class Produto:
+    def __init__(self, sku, lotes: list[Lote]):
+        self.sku = sku
+        self.lotes = lotes
+
+    def alocar(self, linha: LinhaPedido) -> str:
+        try:
+            lote = next(
+                l for l in sorted(self.lotes) if l.pode_alocar(linha)
+            )
+        except StopIteration:
+            raise SemEstoque(f'Sem estoque para sku: {linha.sku}')
+        else:
+            lote.alocar(linha)
+
+        return lote.ref
 
 
 @dataclass(unsafe_hash=True)
@@ -64,14 +83,3 @@ class Lote:
     @property
     def quantidade_disponivel(self):
         return self._qtd_comprada - self.quantidade_alocada
-
-
-def alocar(linha: LinhaPedido, lotes: list[Lote]) -> str:
-    try:
-        lote = next(l for l in sorted(lotes) if l.pode_alocar(linha))
-    except StopIteration:
-        raise SemEstoque(f'Sem estoque para sku: {linha.sku}')
-    else:
-        lote.alocar(linha)
-
-    return lote.ref

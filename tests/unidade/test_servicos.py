@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from pytest import raises
 
 from src.alocacao.adapters import repository
-from src.alocacao.camada_servicos import servicos, uow
+from src.alocacao.camada_servicos import servicos, unit_of_work
 
 
 class FakeSession:
@@ -13,9 +13,9 @@ class FakeSession:
         self.commited = True
 
 
-class FakeUOW(uow.AbstractUOW):
+class FakeUOW(unit_of_work.AbstractUOW):
     def __init__(self):
-        self.lotes = repository.FakeRepository()
+        self.produtos = repository.FakeRepository()
         self.commited = False
 
     def commit(self):
@@ -32,15 +32,15 @@ def obtem_data(arg: str):
 
 def test_adiciona_lote():
     lote_ref = 'lll-000'
-    sku = 'RELOGIO_INTELIGENTE-QUEBRADO'
+    sku = 'RELOGIO-INTELIGENTE-QUEBRADO'
     qtd = 100
     eta = obtem_data('ontem')
 
     uow = FakeUOW()
 
     servicos.adiciona_lote(lote_ref, sku, qtd, eta, uow)
-    lote_esperado = uow.lotes.get(lote_ref)
-    assert lote_esperado.ref == lote_ref
+    produto_esperado = uow.produtos.get(sku)
+    assert produto_esperado.sku == sku
 
 
 def test_commits():
@@ -81,11 +81,10 @@ def test_preferir_estoque_local_ao_em_transporte():
     servicos.alocar('p1', 'VASSOURA-E-RODO', 2, uow)
     servicos.alocar('p2', 'VASSOURA-E-RODO', 3, uow)
 
-    esperdo_lote_hoje = uow.lotes.get(lote_hoje[0])
-    esperdo_lote_amanha = uow.lotes.get(lote_amanha[0])
+    produto_esperado = uow.produtos.get('VASSOURA-E-RODO')
 
-    assert esperdo_lote_hoje.quantidade_disponivel == 45
-    assert esperdo_lote_amanha.quantidade_disponivel == 44
+    assert produto_esperado.lotes[0].quantidade_disponivel == 45
+    assert produto_esperado.lotes[1].quantidade_disponivel == 44
 
 
 def test_retorna_referencia_do_lote_alocado():
@@ -118,10 +117,8 @@ def test_preferir_lote_mais_antigo():
     servicos.adiciona_lote(*lote_futuro, uow)
     servicos.alocar(*linha, uow)
 
-    esperado_lote_antigo = uow.lotes.get(lote_antigo[0])
-    esperado_lote_atual = uow.lotes.get(lote_atual[0])
-    esperado_lote_futuro = uow.lotes.get(lote_futuro[0])
+    produto_esperado = uow.produtos.get(sku)
 
-    assert esperado_lote_antigo.quantidade_disponivel == 15
-    assert esperado_lote_atual.quantidade_disponivel == 10
-    assert esperado_lote_futuro.quantidade_disponivel == 30
+    assert produto_esperado.lotes[0].quantidade_disponivel == 15
+    assert produto_esperado.lotes[1].quantidade_disponivel == 10
+    assert produto_esperado.lotes[2].quantidade_disponivel == 30
