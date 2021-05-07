@@ -6,15 +6,15 @@ from src.alocacao.dominio import modelo
 
 class AbstractRepository():  # porta
     @abstractmethod
-    def add(self, lote: modelo.Lote):
+    def add(self, lote: modelo.Produto):
         ...
 
     @abstractmethod
-    def get(self, ref) -> modelo.Lote:
+    def get(self, sku) -> modelo.Produto:
         ...
 
     @abstractmethod
-    def list_all(self) -> list[modelo.Lote]:
+    def list_all(self) -> list[modelo.Produto]:
         ...
 
 
@@ -22,25 +22,28 @@ class SQLAlchemyRepository(AbstractRepository):  # adaptador
     def __init__(self, session) -> None:
         self.session = session
 
-    def add(self, lote: modelo.Lote):
-        self.session.add(lote)
+    def add(self, produto: modelo.Produto):
+        self.session.add(produto)
 
-    def get(self, ref) -> modelo.Lote:
-        return self.session.query(modelo.Lote).filter_by(ref=ref).one()
+    def get(self, sku) -> modelo.Produto:
+        return self.session.query(modelo.Lote).filter_by(sku=sku).one()
 
-    def list_all(self) -> list[modelo.Lote]:
-        return self.session.query(modelo.Lote).all()
+    def list_all(self) -> list[modelo.Produto]:
+        return self.session.query(modelo.Produto).all()
 
 
 class FakeRepository(AbstractRepository):  # adaptador
     def __init__(self):
-        self._lotes = set()
+        self._produtos = set()
 
-    def add(self, lote: modelo.Lote):
-        self._lotes.add(lote)
+    def add(self, produto: modelo.Produto):
+        self._produtos.add(produto)
 
-    def get(self, ref) -> modelo.Lote:
-        return next(lote for lote in self._lotes if lote.ref == ref)
+    def get(self, sku) -> modelo.Produto:
+        return next(
+            (produto for produto in self._produtos if produto.sku == sku),
+            None
+        )
 
-    def list_all(self) -> list[modelo.Lote]:
-        return list(self._lotes)
+    def list_all(self) -> list[modelo.Produto]:
+        return list(self._produtos)
