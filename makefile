@@ -13,6 +13,9 @@ unit-tests:
 integration-tests: up
 	docker-compose run --rm --no-deps --entrypoint=pytest api /tests/integracao
 
+integration-tests-v-s: up
+	docker-compose run --rm --no-deps --entrypoint=pytest api /tests/integracao -v -s
+
 e2e-tests: up
 	docker-compose run --rm --no-deps --entrypoint=pytest api /tests/ponta-a-ponta
 

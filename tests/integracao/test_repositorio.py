@@ -28,6 +28,14 @@ def insere_lote(session, id_lote):
     return id_lote_
 
 
+def insere_produto(session):
+    session.execute(
+        'INSERT INTO produtos (sku, versao) '
+        'VALUES ("TECLADO-RGB", 0)'
+        
+    )
+
+
 def insere_alocacao(session, id_linha, id_lote):
     session.execute(
         'INSERT INTO alocacoes (pedido_id, lote_id) '
@@ -56,32 +64,31 @@ def test_repositorio_pode_salvar_um_lote(session):
     assert lotes == [('lote-001', 'COLHER-PEQUENA', 100, None)]
 
 
-def test_repositorio_pode_retornar_um_lote_com_alocacoes(session):
+def test_repositorio_pode_retornar_um_produto_com_lotes_alocados(session):
     id_linha = insere_linha_pedido(session)
     id_lote1 = insere_lote(session, 'lote-002')
+    insere_produto(session)
     insere_lote(session, 'lote-003')
     id_al = insere_alocacao(session, id_linha, id_lote1)
     assert id_linha
 
     repo = repository.SQLAlchemyRepository(session)
-    retorno = repo.get('lote-002')
+    retorno_produto = repo.get('TECLADO-RGB')
 
     esperado = modelo.Lote('lote-002', 'TECLADO-RGB', 100, None)
-    assert retorno == esperado
-    assert retorno.sku == esperado.sku
-    assert retorno._qtd_comprada == esperado._qtd_comprada
-    assert retorno._alocacoes == {
-        modelo.LinhaPedido('pedido-001', 'TECLADO-RGB', 11)
-    }
+    assert retorno_produto.lotes[0] == esperado
+    assert retorno_produto.sku == esperado.sku
+    assert retorno_produto.lotes[0]._qtd_comprada == esperado._qtd_comprada
 
 
 def test_repositorio_pode_salvar_lote_com_alocacao(session):
     linha = modelo.LinhaPedido('pedido-005', 'CARREGADOR', 1)
     lote = modelo.Lote('lote-123', 'CARREGADOR', 100, None)
-    modelo.alocar(linha, [lote])
+    produto = modelo.Produto('CARREGADOR', [lote])
+    produto.alocar(linha)
 
     repo = repository.SQLAlchemyRepository(session)
-    repo.add(lote)
+    repo.add(produto)
     session.commit()
 
     [[id_al]] = list(session.execute(
@@ -96,14 +103,3 @@ def test_repositorio_pode_salvar_lote_com_alocacao(session):
         'AND lt.sku="CARREGADOR"'
     ))
     assert id_al
-
-
-def test_repositorio_pode_retornar_lotes(session):
-    for i in range(10):
-        insere_lote(session, f'ped-00{i}')
-
-    repo = repository.SQLAlchemyRepository(session)
-    retorno = repo.list_all()
-
-    for i, ret in enumerate(retorno):
-        assert ret.__repr__() == f'<lote ped-00{i}>'

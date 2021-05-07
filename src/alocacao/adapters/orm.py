@@ -21,7 +21,7 @@ lotes = Table(
     metadata,
     Column('id', Integer, primary_key=True, autoincrement=True),
     Column('ref', String(255)),
-    Column('sku', String(255)),
+    Column('sku', ForeignKey('produtos.sku')),
     Column('_qtd_comprada', Integer, nullable=False),
     Column('eta', Date, nullable=True)
 )
@@ -35,14 +35,27 @@ alocacoes = Table(
 )
 
 
+produtos = Table(
+    'produtos',
+    metadata,
+    Column('sku', String(255), primary_key=True),
+    Column('versao', Integer, nullable=False)
+)
+
+
 def start_mappers():
-    linhas_mapeador = mapper(modelo.LinhaPedido, linhas_pedido)
-    mapper(
+    linhas_mapper = mapper(modelo.LinhaPedido, linhas_pedido)
+    lotes_mapper = mapper(
         modelo.Lote,
         lotes,
         properties={
             '_alocacoes': relationship(
-                linhas_mapeador, secondary=alocacoes, collection_class=set,
+                linhas_mapper, secondary=alocacoes, collection_class=set,
             )
         },
+    )
+    mapper(
+        modelo.Produto,
+        produtos,
+        properties={'lotes': relationship(lotes_mapper)}
     )

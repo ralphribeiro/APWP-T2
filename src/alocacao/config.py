@@ -20,5 +20,5 @@ def get_api_url():
 
 DEFAULT_SESSION_FACTORY = sessionmaker(bind=create_engine(
     get_postgres_uri(),
-    isolation_level="SERIALIZABLE",
+    isolation_level="REPEATABLE READ",
 ))

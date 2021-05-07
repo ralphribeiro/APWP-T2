@@ -26,7 +26,7 @@ class SQLAlchemyRepository(AbstractRepository):  # adaptador
         self.session.add(produto)
 
     def get(self, sku) -> modelo.Produto:
-        return self.session.query(modelo.Lote).filter_by(sku=sku).one()
+        return self.session.query(modelo.Produto).filter_by(sku=sku).one()
 
     def list_all(self) -> list[modelo.Produto]:
         return self.session.query(modelo.Produto).all()

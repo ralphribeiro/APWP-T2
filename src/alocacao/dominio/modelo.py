@@ -9,9 +9,10 @@ class SemEstoque(Exception):
 
 
 class Produto:
-    def __init__(self, sku, lotes: list[Lote]):
+    def __init__(self, sku, lotes: list[Lote], versao: int = 0):
         self.sku = sku
         self.lotes = lotes
+        self.versao = versao
 
     def alocar(self, linha: LinhaPedido) -> str:
         try:
@@ -22,6 +23,7 @@ class Produto:
             raise SemEstoque(f'Sem estoque para sku: {linha.sku}')
         else:
             lote.alocar(linha)
+            self.versao += 1
 
         return lote.ref
 

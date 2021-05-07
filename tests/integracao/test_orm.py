@@ -89,7 +89,8 @@ def test_mapeador_alocacao_deve_carregar_alocacoes(session):
 def test_mapeador_alocacao_pode_salvar_alocacao(session):
     linha = modelo.LinhaPedido('pedido2', 'BOLA', 1)
     lote = modelo.Lote('lote2', 'BOLA', 66, None)
-    modelo.alocar(linha, [lote])
+    produto = modelo.Produto('BOLA', [lote])
+    produto.alocar(linha)
     session.add(lote)
     session.commit()
 
