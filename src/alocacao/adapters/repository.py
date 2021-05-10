@@ -2,7 +2,7 @@ from abc import abstractmethod
 
 from sqlalchemy.orm import Session
 
-from src.alocacao.dominio import modelo
+from alocacao.dominio import modelo
 
 
 class AbstractRepository():  # porta

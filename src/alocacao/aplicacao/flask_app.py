@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def ola():
-    return 'Olá'
+    return 'Olá', 200
 
 
 @app.route('/adiciona_lote', methods=['POST'])

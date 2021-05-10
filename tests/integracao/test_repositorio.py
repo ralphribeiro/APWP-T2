@@ -1,5 +1,10 @@
-from src.alocacao.dominio import modelo
-from src.alocacao.adapters import repository
+import pytest
+
+from alocacao.dominio import modelo
+from alocacao.adapters import repository
+
+
+pytestmark = pytest.mark.usefixtures('mappers')
 
 
 def insere_linha_pedido(session):
@@ -32,7 +37,6 @@ def insere_produto(session):
     session.execute(
         'INSERT INTO produtos (sku, versao) '
         'VALUES ("TECLADO-RGB", 0)'
-        
     )
 
 
@@ -51,7 +55,8 @@ def insere_alocacao(session, id_linha, id_lote):
     return id_alocacao
 
 
-def test_repositorio_pode_salvar_um_lote(session):
+def test_repositorio_pode_salvar_um_lote(sqlite_session_factory):
+    session = sqlite_session_factory()
     lote = modelo.Lote('lote-001', 'COLHER-PEQUENA', 100, eta=None)
 
     repo = repository.SQLAlchemyRepository(session)
@@ -64,7 +69,8 @@ def test_repositorio_pode_salvar_um_lote(session):
     assert lotes == [('lote-001', 'COLHER-PEQUENA', 100, None)]
 
 
-def test_repositorio_pode_retornar_um_produto_com_lotes_alocados(session):
+def test_repositorio_pode_retornar_um_produto_com_lotes_alocados(sqlite_session_factory):
+    session = sqlite_session_factory()
     id_linha = insere_linha_pedido(session)
     id_lote1 = insere_lote(session, 'lote-002')
     insere_produto(session)
@@ -81,7 +87,8 @@ def test_repositorio_pode_retornar_um_produto_com_lotes_alocados(session):
     assert retorno_produto.lotes[0]._qtd_comprada == esperado._qtd_comprada
 
 
-def test_repositorio_pode_salvar_lote_com_alocacao(session):
+def test_repositorio_pode_salvar_lote_com_alocacao(sqlite_session_factory):
+    session = sqlite_session_factory()
     linha = modelo.LinhaPedido('pedido-005', 'CARREGADOR', 1)
     lote = modelo.Lote('lote-123', 'CARREGADOR', 100, None)
     produto = modelo.Produto('CARREGADOR', [lote])

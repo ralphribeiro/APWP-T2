@@ -17,7 +17,7 @@ e2e-tests: up
 	docker-compose run --rm --no-deps --entrypoint="python3 -m pytest" api /tests/ponta-a-ponta
 
 e2e-tests-v-s: up
-	docker-compose run --rm --no-deps --entrypoint="python3 -m pytest" api /tests/ponta-a-ponta -v -s
+	docker-compose run --rm --no-deps --entrypoint="python3 -m pytest" api /tests/ponta-a-ponta	-v -s
 
 logs:
 	docker-compose logs --tail=25 api

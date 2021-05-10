@@ -1,8 +1,8 @@
 from __future__ import annotations
 import abc
 
-from src.alocacao.adapters import repository
-from src.alocacao.config import DEFAULT_SESSION_FACTORY
+from alocacao.adapters import repository
+from alocacao.config import DEFAULT_SESSION_FACTORY
 
 
 class AbstractUOW(abc.ABC):

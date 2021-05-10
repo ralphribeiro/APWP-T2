@@ -8,28 +8,27 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, clear_mappers
 
-from src.alocacao.adapters.orm import metadata, start_mappers
-from src.alocacao import config
+from alocacao.adapters.orm import metadata, start_mappers
+from alocacao import config
 
 
 @pytest.fixture
-def in_memory_db():
+def in_memory_sqlite_db():
     engine = create_engine("sqlite:///:memory:")
     metadata.create_all(engine)
     return engine
 
 
 @pytest.fixture
-def session_factory(in_memory_db):
-    start_mappers()
-    yield sessionmaker(bind=in_memory_db)
-    clear_mappers()
+def sqlite_session_factory(in_memory_sqlite_db):
+    yield sessionmaker(bind=in_memory_sqlite_db)
 
 
 @pytest.fixture
-def session(session_factory):
-    return session_factory()
-
+def mappers():
+    start_mappers()
+    yield
+    clear_mappers()
 
 def wait_for_postgres_to_come_up(engine):
     deadline = time.time() + 10
@@ -44,13 +43,11 @@ def wait_for_postgres_to_come_up(engine):
 def wait_for_webapp_to_come_up():
     deadline = time.time() + 10
     url = config.get_api_url()
-    print(url)
     while time.time() < deadline:
         try:
             ret = requests.get(f'{url}/')
-            print(ret)
             return ret
-        except ConnectionError:
+        except ConnectionError as e:
             time.sleep(0.5)
     pytest.fail('API never came up')
 
@@ -65,9 +62,7 @@ def postgres_db():
 
 @pytest.fixture
 def postgres_session_factory(postgres_db):
-    start_mappers()
     yield sessionmaker(bind=postgres_db)
-    clear_mappers()
 
 
 @pytest.fixture

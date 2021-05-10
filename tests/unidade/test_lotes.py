@@ -1,6 +1,6 @@
 from datetime import date
 
-from src.alocacao.dominio.modelo import LinhaPedido, Lote
+from alocacao.dominio.modelo import LinhaPedido, Lote
 
 
 def faz_lote_e_linha(sku, qtd_lote, qtd_linha):

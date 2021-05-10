@@ -1,7 +1,12 @@
-from src.alocacao.dominio import modelo
+import pytest
+
+from alocacao.dominio import modelo
+
+pytestmark = pytest.mark.usefixtures('mappers')
 
 
-def test_mapeador_linhapedido_pode_carregar_linhas(session):
+def test_mapeador_linhapedido_pode_carregar_linhas(sqlite_session_factory):
+    session = sqlite_session_factory()
     session.execute(
         'INSERT INTO linhas_pedido (pedido_id, sku, qtd) VALUES '
         '("pedido1", "CADEIRA-VERMELHA", 12),'
@@ -17,7 +22,8 @@ def test_mapeador_linhapedido_pode_carregar_linhas(session):
     assert esperado == session.query(modelo.LinhaPedido).all()
 
 
-def test_mapeador_linhapedido_pode_salvar_linhas(session):
+def test_mapeador_linhapedido_pode_salvar_linhas(sqlite_session_factory):
+    session = sqlite_session_factory()
     nova_linha = modelo.LinhaPedido('pedido1', 'CASA-DO-CHAPEU', 2)
     session.add(nova_linha)
     session.commit()
@@ -28,7 +34,8 @@ def test_mapeador_linhapedido_pode_salvar_linhas(session):
     assert esperado == [('pedido1', 'CASA-DO-CHAPEU', 2)]
 
 
-def test_mapeador_lote_pode_carregar_lotes(session):
+def test_mapeador_lote_pode_carregar_lotes(sqlite_session_factory):
+    session = sqlite_session_factory()
     session.execute(
         'INSERT INTO lotes (ref, sku, _qtd_comprada, eta) '
         'values ("lote-111", "CHICLETE-PROHK", 100, null)'
@@ -45,7 +52,8 @@ def test_mapeador_lote_pode_carregar_lotes(session):
     assert esperado == session.query(modelo.Lote).all()
 
 
-def test_mapeador_lote_pode_salvar_lotes(session):
+def test_mapeador_lote_pode_salvar_lotes(sqlite_session_factory):
+    session = sqlite_session_factory()
     lote = modelo.Lote('lote-666', 'CORAÇÃO-BALÃO', 1000, None)
     session.add(lote)
     session.commit()
@@ -56,7 +64,8 @@ def test_mapeador_lote_pode_salvar_lotes(session):
     assert esperado == [('lote-666', 'CORAÇÃO-BALÃO', 1000, None)]
 
 
-def test_mapeador_alocacao_deve_carregar_alocacoes(session):
+def test_mapeador_alocacao_deve_carregar_alocacoes(sqlite_session_factory):
+    session = sqlite_session_factory()
     session.execute(
         'INSERT INTO lotes (ref, sku, _qtd_comprada, eta) VALUES '
         ' ("lote-111", "CADEIRA-VERMELHA", 100, null)'
@@ -86,7 +95,8 @@ def test_mapeador_alocacao_deve_carregar_alocacoes(session):
         'pedido1', 'CADEIRA-VERMELHA', 10)}
 
 
-def test_mapeador_alocacao_pode_salvar_alocacao(session):
+def test_mapeador_alocacao_pode_salvar_alocacao(sqlite_session_factory):
+    session = sqlite_session_factory()
     linha = modelo.LinhaPedido('pedido2', 'BOLA', 1)
     lote = modelo.Lote('lote2', 'BOLA', 66, None)
     produto = modelo.Produto('BOLA', [lote])

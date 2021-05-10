@@ -2,8 +2,8 @@ from datetime import date, timedelta
 
 from pytest import raises
 
-from src.alocacao.adapters import repository
-from src.alocacao.camada_servicos import servicos, unit_of_work
+from alocacao.adapters import repository
+from alocacao.camada_servicos import servicos, unit_of_work
 
 
 class FakeSession:

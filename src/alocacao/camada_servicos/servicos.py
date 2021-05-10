@@ -1,8 +1,8 @@
 from datetime import date
 from typing import Optional
 
-from src.alocacao.dominio import modelo
-from src.alocacao.camada_servicos import unit_of_work
+from alocacao.dominio import modelo
+from alocacao.camada_servicos import unit_of_work
 
 
 class SkuInvalido(Exception):

@@ -3,12 +3,12 @@ from datetime import date, timedelta
 import pytest
 import requests
 
-from src.alocacao import config
+from alocacao import config
 from tests.suporte_testes import (
     ref_lote_aleatorio, sku_aleatorio, id_pedido_aleatorio
 )
 
-@pytest.mark.usefixtures('postgres_session')
+@pytest.mark.usefixtures('postgres_db')
 @pytest.mark.usefixtures('restart_api')
 def test_api_retorna_201_quando_adiciona_um_lote():
     ref = ref_lote_aleatorio()

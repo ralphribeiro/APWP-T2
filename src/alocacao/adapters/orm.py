@@ -2,7 +2,7 @@ from sqlalchemy.orm import mapper, relationship
 from sqlalchemy.sql.schema import Column, ForeignKey, MetaData, Table
 from sqlalchemy.sql.sqltypes import Integer, String, Date
 
-from src.alocacao.dominio import modelo
+from alocacao.dominio import modelo
 
 metadata = MetaData()
 

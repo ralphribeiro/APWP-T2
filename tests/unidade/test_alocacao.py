@@ -2,7 +2,7 @@ from datetime import date, timedelta
 
 from pytest import raises
 
-from src.alocacao.dominio.modelo import Lote, LinhaPedido, Produto, SemEstoque
+from alocacao.dominio.modelo import Lote, LinhaPedido, Produto, SemEstoque
 
 
 hoje = date.today()
