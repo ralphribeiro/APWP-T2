@@ -16,12 +16,19 @@ services:
       - PYTHONUNBUFFERED=1
     volumes:
       - ./src:/src
-      - ./tests:/tests
+      - ./tests:/tests   
+    # entrypoint:
+    #   - gunicorn 
+    #   - alocacao.aplicacao.flask_app:app
+    #   - -b 0.0.0.0:80
+    #   - -t 3600
     entrypoint:
       - flask
       - run
       - --host=0.0.0.0
       - --port=80
+    stdin_open: true
+    tty: true
     ports:
       - "5005:80"
 

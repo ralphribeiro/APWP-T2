@@ -8,8 +8,8 @@ from sqlalchemy.exc import OperationalError
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, clear_mappers
 
-from src.alocacao import config
 from src.alocacao.adapters.orm import metadata, start_mappers
+from src.alocacao import config
 
 
 @pytest.fixture
@@ -44,9 +44,12 @@ def wait_for_postgres_to_come_up(engine):
 def wait_for_webapp_to_come_up():
     deadline = time.time() + 10
     url = config.get_api_url()
+    print(url)
     while time.time() < deadline:
         try:
-            return requests.get(url)
+            ret = requests.get(f'{url}/')
+            print(ret)
+            return ret
         except ConnectionError:
             time.sleep(0.5)
     pytest.fail('API never came up')

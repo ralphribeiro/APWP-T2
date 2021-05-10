@@ -17,7 +17,7 @@ def adiciona_lote(
     uow: unit_of_work.AbstractUOW
 ):
     with uow:
-        produto = uow.produtos.get(sku)
+        produto = uow.produtos.get(sku=sku)
         if produto is None:
             produto = modelo.Produto(sku, lotes=[])
             uow.produtos.add(produto)

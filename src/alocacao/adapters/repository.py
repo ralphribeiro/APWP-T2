@@ -1,5 +1,6 @@
 from abc import abstractmethod
 
+from sqlalchemy.orm import Session
 
 from src.alocacao.dominio import modelo
 
@@ -19,14 +20,16 @@ class AbstractRepository():  # porta
 
 
 class SQLAlchemyRepository(AbstractRepository):  # adaptador
-    def __init__(self, session) -> None:
+    def __init__(self, session: Session) -> None:
         self.session = session
 
     def add(self, produto: modelo.Produto):
         self.session.add(produto)
 
     def get(self, sku) -> modelo.Produto:
-        return self.session.query(modelo.Produto).filter_by(sku=sku).one()
+        # import pdb; pdb.set_trace()
+        ret = self.session.query(modelo.Produto).filter_by(sku=sku).one()
+        return ret
 
     def list_all(self) -> list[modelo.Produto]:
         return self.session.query(modelo.Produto).all()
