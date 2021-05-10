@@ -2,11 +2,13 @@ from datetime import date
 
 from flask import Flask, request
 
+from alocacao.adapters import orm
 from alocacao.dominio import modelo
 from alocacao.camada_servicos import servicos, unit_of_work
 
 
 app = Flask(__name__)
+orm.start_mappers()
 
 
 @app.route('/')
@@ -20,10 +22,11 @@ def adiciona_lote_endpoint():
     if eta is None:
         eta = date.today()
 
-    with unit_of_work.SQLAlchemyUOW() as uow:
-        servicos.adiciona_lote(
-            request.json['ref'], request.json['sku'],
-            request.json['qtd'], eta, uow)
+    uow = unit_of_work.SQLAlchemyUOW()
+
+    servicos.adiciona_lote(
+        request.json['ref'], request.json['sku'],
+        request.json['qtd'], eta, uow)
 
     return 'OK', 201
 

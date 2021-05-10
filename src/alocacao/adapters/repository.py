@@ -27,9 +27,7 @@ class SQLAlchemyRepository(AbstractRepository):  # adaptador
         self.session.add(produto)
 
     def get(self, sku) -> modelo.Produto:
-        # import pdb; pdb.set_trace()
-        ret = self.session.query(modelo.Produto).filter_by(sku=sku).one()
-        return ret
+        return self.session.query(modelo.Produto).filter_by(sku=sku).first()
 
     def list_all(self) -> list[modelo.Produto]:
         return self.session.query(modelo.Produto).all()
