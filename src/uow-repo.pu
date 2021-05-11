@@ -1,0 +1,35 @@
+@startuml
+
+class AbstractRepository
+{
+    add(Produto)
+    get() -> Produto
+}
+
+class TrackingRepository
+{
+    seen: set[Produto]
+    __init__(AbstractRepository)
+    add()
+    get()
+}
+
+class Produto
+
+class SQLAlchemyRepository
+{
+    session
+    add(Produto)
+    get() -> Produto
+}
+
+class UOW
+
+AbstractRepository .. Produto
+TrackingRepository .. Produto
+SQLAlchemyRepository o-- Produto
+TrackingRepository o-- AbstractRepository
+UOW o-- SQLAlchemyRepository
+UOW o-- TrackingRepository
+
+@enduml
