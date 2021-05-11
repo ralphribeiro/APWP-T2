@@ -69,22 +69,6 @@ def test_rolls_back_no_erro(sqlite_session_factory):
     ))
     assert lotes == []
 
-
-def test_uow_pode_retornar_um_produto_adicionar_lote_e_alocar_linha_pedido(sqlite_session_factory):
-    session = sqlite_session_factory()
-    insere_lote(session, 'lote-22', 'MONITOR', 12, None)
-    session.commit()
-
-    with unit_of_work.SQLAlchemyUOW(sqlite_session_factory) as uow:
-        produto = uow.produtos.get('MONITOR')
-        linha = modelo.LinhaPedido('pedido-22', 'MONITOR', 1)
-        produto.alocar(linha)
-        uow.commit()
-
-    # lote_ref = obtem_ref_lote_alocado(session, 'pedido-22', 'MONITOR')
-    # assert lote_ref == 'lote-22'
-
-
 def tenta_alocar(pedido_id, sku, exceptions):
     linha = modelo.LinhaPedido(pedido_id, sku, 10)
     try:

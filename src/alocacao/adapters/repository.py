@@ -1,27 +1,38 @@
-from abc import abstractmethod
+from typing import Protocol
 
 from sqlalchemy.orm import Session
 
 from alocacao.dominio import modelo
 
 
-class AbstractRepository():  # porta
-    @abstractmethod
-    def add(self, lote: modelo.Produto):
-        ...
+class AbstractRepository(Protocol): # porta
+    seen: set[modelo.Produto]
+    def add(self, produto: modelo.Produto) -> None: ...
+    def get(self, sku) -> modelo.Produto: ...
 
-    @abstractmethod
+
+class TrackingRepository:
+    seen: set[modelo.Produto]
+
+    def __init__(self, repo: AbstractRepository):
+        self.seen = set()
+        self._repo = repo
+
+    def add(self, produto: modelo.Produto):
+        self._repo.add(produto)
+        self.seen.add(produto)
+
     def get(self, sku) -> modelo.Produto:
-        ...
+        produto = self._repo.get(sku)
+        if produto:
+            self.seen.add(produto)
+        return produto
 
-    @abstractmethod
-    def list_all(self) -> list[modelo.Produto]:
-        ...
 
-
-class SQLAlchemyRepository(AbstractRepository):  # adaptador
+class SQLAlchemyRepository:  # adaptador
     def __init__(self, session: Session) -> None:
         self.session = session
+        self.seen: set[modelo.Produto] = set()
 
     def add(self, produto: modelo.Produto):
         self.session.add(produto)
@@ -29,22 +40,3 @@ class SQLAlchemyRepository(AbstractRepository):  # adaptador
     def get(self, sku) -> modelo.Produto:
         return self.session.query(modelo.Produto).filter_by(sku=sku).first()
 
-    def list_all(self) -> list[modelo.Produto]:
-        return self.session.query(modelo.Produto).all()
-
-
-class FakeRepository(AbstractRepository):  # adaptador
-    def __init__(self):
-        self._produtos = set()
-
-    def add(self, produto: modelo.Produto):
-        self._produtos.add(produto)
-
-    def get(self, sku) -> modelo.Produto:
-        return next(
-            (produto for produto in self._produtos if produto.sku == sku),
-            None
-        )
-
-    def list_all(self) -> list[modelo.Produto]:
-        return list(self._produtos)

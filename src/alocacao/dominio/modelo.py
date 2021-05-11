@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Optional
 
+from . import eventos
+
 
 class SemEstoque(Exception):
     ...
@@ -13,6 +15,7 @@ class Produto:
         self.sku = sku
         self.lotes = lotes
         self.versao = versao
+        self.eventos: list[eventos.Evento] = []
 
     def alocar(self, linha: LinhaPedido) -> str:
         try:
@@ -20,12 +23,12 @@ class Produto:
                 l for l in sorted(self.lotes) if l.pode_alocar(linha)
             )
         except StopIteration:
-            raise SemEstoque(f'Sem estoque para sku: {linha.sku}')
+            self.eventos.append(eventos.SemEstoque(sku=linha.sku))
+            return None
         else:
             lote.alocar(linha)
             self.versao += 1
-
-        return lote.ref
+            return lote.ref
 
 
 @dataclass(unsafe_hash=True)
@@ -68,14 +71,15 @@ class Lote:
         return hash(self.ref)
 
     def alocar(self, linha: LinhaPedido):
-        self._alocacoes.add(linha)
+        if self.pode_alocar(linha):
+            self._alocacoes.add(linha)
 
     def desalocar(self, linha: LinhaPedido):
         self._alocacoes.discard(linha)
 
     def pode_alocar(self, linha: LinhaPedido):
         return (
-            self.sku == linha.sku and self._qtd_comprada >= linha.qtd
+            self.sku == linha.sku and self.quantidade_disponivel >= linha.qtd
         )
 
     @property

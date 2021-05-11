@@ -4,6 +4,7 @@ from pytest import raises
 
 from alocacao.adapters import repository
 from alocacao.camada_servicos import servicos, unit_of_work
+from alocacao.dominio import modelo
 
 
 class FakeSession:
@@ -13,12 +14,28 @@ class FakeSession:
         self.commited = True
 
 
+class FakeRepository:  # adaptador
+    seen: set[modelo.Produto]
+    def __init__(self):
+        super().__init__()
+        self._produtos = set()
+
+    def add(self, produto: modelo.Produto):
+        self._produtos.add(produto)
+
+    def get(self, sku) -> modelo.Produto:
+        return next(
+            (produto for produto in self._produtos if produto.sku == sku),
+            None
+        )
+
+
 class FakeUOW(unit_of_work.AbstractUOW):
     def __init__(self):
-        self.produtos = repository.FakeRepository()
+        self.produtos = repository.TrackingRepository(FakeRepository())
         self.commited = False
 
-    def commit(self):
+    def _commit(self):
         self.commited = True
 
     def rollback(self):
