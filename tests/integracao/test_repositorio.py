@@ -4,7 +4,21 @@ from alocacao.dominio import modelo
 from alocacao.adapters import repository
 
 
-pytestmark = pytest.mark.usefixtures('mappers')
+pytestmark = pytest.mark.usefixtures("mappers")
+
+
+def test_obtem_produto_pelo_lore_ref(sqlite_session_factory):
+    lote_ref1 = modelo.Lote("lote1", "CELULAR", 10, None)
+    lote_ref2 = modelo.Lote("lote2", "CELULAR", 11, None)
+    lote_ref3 = modelo.Lote("lote3", "CARREGADOR", 12, None)
+    prod1 = modelo.Produto("CELULAR", [lote_ref1, lote_ref2])
+    prod2 = modelo.Produto("CARREGADOR", [lote_ref3])
+
+    repo = repository.TrackingRepository(
+        repository.SQLAlchemyRepository(sqlite_session_factory())
+    )
+    repo.get_by_ref(lote_ref2.ref) == prod1
+    repo.get_by_ref(lote_ref3.ref) == prod2
 
 
 def insere_linha_pedido(session):
@@ -55,20 +69,6 @@ def insere_alocacao(session, id_linha, id_lote):
     return id_alocacao
 
 
-def test_repositorio_pode_salvar_um_lote(sqlite_session_factory):
-    session = sqlite_session_factory()
-    lote = modelo.Lote('lote-001', 'COLHER-PEQUENA', 100, eta=None)
-
-    repo = repository.SQLAlchemyRepository(session)
-    repo.add(lote)
-    session.commit()
-
-    lotes = list(session.execute(
-        'SELECT ref, sku, _qtd_comprada, eta FROM lotes'
-    ))
-    assert lotes == [('lote-001', 'COLHER-PEQUENA', 100, None)]
-
-
 def test_repositorio_pode_retornar_um_produto_com_lotes_alocados(sqlite_session_factory):
     session = sqlite_session_factory()
     id_linha = insere_linha_pedido(session)
@@ -85,28 +85,3 @@ def test_repositorio_pode_retornar_um_produto_com_lotes_alocados(sqlite_session_
     assert retorno_produto.lotes[0] == esperado
     assert retorno_produto.sku == esperado.sku
     assert retorno_produto.lotes[0]._qtd_comprada == esperado._qtd_comprada
-
-
-def test_repositorio_pode_salvar_lote_com_alocacao(sqlite_session_factory):
-    session = sqlite_session_factory()
-    linha = modelo.LinhaPedido('pedido-005', 'CARREGADOR', 1)
-    lote = modelo.Lote('lote-123', 'CARREGADOR', 100, None)
-    produto = modelo.Produto('CARREGADOR', [lote])
-    produto.alocar(linha)
-
-    repo = repository.SQLAlchemyRepository(session)
-    repo.add(produto)
-    session.commit()
-
-    [[id_al]] = list(session.execute(
-        'SELECT al.id FROM alocacoes AS al '
-        'JOIN linhas_pedido AS lp '
-        'JOIN lotes AS lt '
-        'WHERE al.pedido_id=lp.id '
-        'AND al.lote_id=lt.id '
-        'AND lp.pedido_id="pedido-005" '
-        'AND lp.sku="CARREGADOR" '
-        'AND lt.ref="lote-123" '
-        'AND lt.sku="CARREGADOR"'
-    ))
-    assert id_al
