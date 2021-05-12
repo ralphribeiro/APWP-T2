@@ -8,35 +8,32 @@ from ..suporte_testes import id_pedido_aleatorio, ref_lote_aleatorio, sku_aleato
 from alocacao.camada_servicos import unit_of_work
 from alocacao.dominio import modelo
 
-pytestmark = mark.usefixtures('mappers')
+pytestmark = mark.usefixtures("mappers")
 
 
 def insere_lote(session, ref, sku, qtd, eta, versao_produto=0):
     session.execute(
-        'INSERT INTO produtos (sku, versao) '
-        'VALUES (:sku, :versao)',
-        dict(sku=sku, versao=versao_produto)
+        "INSERT INTO produtos (sku, versao) VALUES (:sku, :versao)",
+        dict(sku=sku, versao=versao_produto),
     )
     session.execute(
-        'INSERT INTO lotes (ref, sku, _qtd_comprada, eta) '
-        'VALUES (:ref, :sku, :qtd, :eta)',
-        dict(ref=ref, sku=sku, qtd=qtd, eta=eta)
+        "INSERT INTO lotes (ref, sku, _qtd_comprada, eta) "
+        "VALUES (:ref, :sku, :qtd, :eta)",
+        dict(ref=ref, sku=sku, qtd=qtd, eta=eta),
     )
 
 
 def obtem_ref_lote_alocado(session, pedido_id, sku):
     [[linha_pedido_id]] = session.execute(
-        'SELECT id FROM linhas_pedido '
-        'WHERE pedido_id=:pedido_id '
-        'AND sku=:sku',
-        dict(pedido_id=pedido_id, sku=sku)
+        "SELECT id FROM linhas_pedido WHERE pedido_id=:pedido_id AND sku=:sku",
+        dict(pedido_id=pedido_id, sku=sku),
     )
     [[lote_ref]] = session.execute(
-        'SELECT lt.ref FROM lotes AS lt '
-        'JOIN alocacoes AS al '
-        'ON al.lote_id = lt.id '
-        'WHERE al.pedido_id=:linha_pedido_id',
-        dict(linha_pedido_id=linha_pedido_id)
+        "SELECT lt.ref FROM lotes AS lt "
+        "JOIN alocacoes AS al "
+        "ON al.lote_id = lt.id "
+        "WHERE al.pedido_id=:linha_pedido_id",
+        dict(linha_pedido_id=linha_pedido_id),
     )
     return lote_ref
 
@@ -44,13 +41,11 @@ def obtem_ref_lote_alocado(session, pedido_id, sku):
 def test_rolls_back_por_padrao_em_um_uow_sem_commit(sqlite_session_factory):
     uow = unit_of_work.SQLAlchemyUOW(sqlite_session_factory)
     with uow:
-        insere_lote(uow.session, 'lote-00', 'MOUSE', 10, None)
+        insere_lote(uow.session, "lote-00", "MOUSE", 10, None)
 
     new_session = sqlite_session_factory()
 
-    lotes = list(new_session.execute(
-        'SELECT * FROM lotes'
-    ))
+    lotes = list(new_session.execute("SELECT * FROM lotes"))
     assert lotes == []
 
 
@@ -61,13 +56,12 @@ def test_rolls_back_no_erro(sqlite_session_factory):
     uow = unit_of_work.SQLAlchemyUOW(sqlite_session_factory)
     with raises(ExceptionTest):
         with uow:
-            insere_lote(uow.session, 'lote-11', 'TECLADO', 12, None)
+            insere_lote(uow.session, "lote-11", "TECLADO", 12, None)
             raise ExceptionTest()
 
-    lotes = list(uow.session.execute(
-        'SELECT * FROM lotes'
-    ))
+    lotes = list(uow.session.execute("SELECT * FROM lotes"))
     assert lotes == []
+
 
 def tenta_alocar(pedido_id, sku, exceptions):
     linha = modelo.LinhaPedido(pedido_id, sku, 10)
@@ -100,27 +94,42 @@ def test_atualização_concorrente_para_versao_nao_concorrente(postgres_session_
     thread2.join()
 
     [[versao]] = session.execute(
-        'SELECT versao FROM produtos WHERE sku=:sku',
-        dict(sku=sku)
+        "SELECT versao FROM produtos WHERE sku=:sku", dict(sku=sku)
     )
     assert versao == 2
-    assert (
-        'could not serialize access due to concurrent update' in str(
-            exceptions)
-    )
+    assert "could not serialize access due to concurrent update" in str(exceptions)
 
-    pedidos_ids = list(session.execute(
-        'SELECT al.pedido_id '
-        'FROM alocacoes AS al '
-        'JOIN lotes AS lt '
-        'ON al.lote_id = lt.id '
-        'JOIN linhas_pedido AS lp '
-        'ON al.pedido_id = lp.id '
-        'WHERE lt.ref=:ref',
-        dict(ref=lote_ref)
-    ))
+    pedidos_ids = list(
+        session.execute(
+            "SELECT al.pedido_id "
+            "FROM alocacoes AS al "
+            "JOIN lotes AS lt "
+            "ON al.lote_id = lt.id "
+            "JOIN linhas_pedido AS lp "
+            "ON al.pedido_id = lp.id "
+            "WHERE lt.ref=:ref",
+            dict(ref=lote_ref),
+        )
+    )
 
     assert len(pedidos_ids) == 1
 
     with unit_of_work.SQLAlchemyUOW(postgres_session_factory) as uow:
-        uow.session.execute('SELECT 1')
+        uow.session.execute("SELECT 1")
+
+
+def test_ao_alocar_versao_deve_ser_incrementada(sqlite_session_factory):
+    session = sqlite_session_factory()
+    sku = "ROBIN-HOOD"
+    insere_lote(session, "lote-inc", sku, 66, None, versao_produto=5)
+    linha = modelo.LinhaPedido("pedido-inc", sku, 11)
+    with unit_of_work.SQLAlchemyUOW(sqlite_session_factory) as uow:
+        produto = uow.produtos.get(sku)
+        produto.alocar(linha)
+        uow.commit()
+
+    [[versao]] = session.execute(
+        "SELECT versao FROM produtos " "WHERE sku=:sku", dict(sku=sku)
+    )
+
+    assert versao == 6
