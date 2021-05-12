@@ -41,8 +41,9 @@ class SQLAlchemyUOW(AbstractUOW):
 
     def __enter__(self):
         self.session = self.session_factory()
-        repo = repository.SQLAlchemyRepository(self.session)
-        self.produtos = repository.TrackingRepository(repo)
+        self.produtos = repository.TrackingRepository(
+            repository.SQLAlchemyRepository(self.session)
+        )
         return super().__enter__()
 
     def __exit__(self, *args):
