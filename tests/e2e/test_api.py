@@ -4,7 +4,7 @@ import pytest
 import requests
 
 from alocacao import config
-from tests.suporte_testes import (
+from ..suporte_testes import (
     ref_lote_aleatorio, sku_aleatorio, id_pedido_aleatorio
 )
 
