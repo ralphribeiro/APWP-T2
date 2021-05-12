@@ -15,7 +15,6 @@ class FakeSession:
 
 
 class FakeRepository:  # adaptador
-    seen: set[modelo.Produto]
     def __init__(self):
         super().__init__()
         self._produtos = set()
