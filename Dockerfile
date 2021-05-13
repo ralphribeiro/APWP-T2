@@ -1,15 +1,7 @@
 FROM python:3.9
 
-
-RUN apt update && apt-get install -y --no-install-recommends \
-    postgresql-client \
-    && rm -rf /var/lib/apt/lists/*
-
-ENV PYTHON_VERSION 3.9.4
-
 RUN mkdir -p /src
 COPY src/ /src/
-# RUN pip install -e /src
 COPY tests/ /tests/
 
 WORKDIR /src
