@@ -30,6 +30,11 @@ class Produto:
             self.versao += 1
             return lote.ref
 
+    def altera_qtd_lote(self, ref, qtd_nova):
+        lote = next((lt for lt in self.lotes if lt.ref == ref), None)
+        lote.altera_qtd(qtd_nova)
+        return lote.ref
+
 
 @dataclass(unsafe_hash=True)
 class LinhaPedido:
@@ -81,6 +86,9 @@ class Lote:
         return (
             self.sku == linha.sku and self.quantidade_disponivel >= linha.qtd
         )
+
+    def altera_qtd(self, qtd_nova):
+        self._qtd_comprada = qtd_nova
 
     @property
     def quantidade_alocada(self):

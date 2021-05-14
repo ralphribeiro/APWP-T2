@@ -2,7 +2,6 @@ from __future__ import annotations
 import abc
 
 from alocacao.adapters import repository
-from alocacao.camada_servicos import messagebus
 from alocacao.config import DEFAULT_SESSION_FACTORY
 
 
@@ -17,14 +16,11 @@ class AbstractUOW(abc.ABC):
 
     def commit(self):
         self._commit()
-        self.publish_events()
 
-    def publish_events(self):
+    def collect_new_events(self):
         for produto in self.produtos.seen:
             while produto.eventos:
-                evento = produto.eventos.pop(0)
-                print(evento)
-                messagebus.handle(evento)
+                yield produto.eventos.pop(0)
 
     @abc.abstractmethod
     def _commit(self):

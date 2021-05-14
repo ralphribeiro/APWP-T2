@@ -3,42 +3,45 @@ from datetime import date
 from flask import Flask, request
 
 from alocacao.adapters import orm
-from alocacao.dominio import modelo
-from alocacao.camada_servicos import servicos, unit_of_work
+from alocacao.dominio import eventos, modelo
+from alocacao.camada_servicos import handlers, messagebus, unit_of_work
 
 
 app = Flask(__name__)
 orm.start_mappers()
 
 
-@app.route('/')
+@app.route("/")
 def ola():
-    return 'Olá', 200
+    return "Olá", 200
 
 
-@app.route('/adiciona_lote', methods=['POST'])
+@app.route("/adiciona_lote", methods=["POST"])
 def adiciona_lote_endpoint():
-    eta = request.json['eta']
+    eta = request.json["eta"]
     if eta is None:
         eta = date.today()
 
     uow = unit_of_work.SQLAlchemyUOW()
 
-    servicos.adiciona_lote(
-        request.json['ref'], request.json['sku'],
-        request.json['qtd'], eta, uow)
+    messagebus.handle(
+        eventos.LoteCriado(
+            request.json["ref"], request.json["sku"], request.json["qtd"], eta
+        ), uow
+    )
 
-    return 'OK', 201
+    return "OK", 201
 
 
-@app.route('/alocar', methods=['POST'])
+@app.route("/alocar", methods=["POST"])
 def alocar_endpoint():
-    linha = (request.json['pedido_id'],
-             request.json['sku'], request.json['qtd'])
+    linha = (request.json["pedido_id"], request.json["sku"], request.json["qtd"])
     with unit_of_work.SQLAlchemyUOW() as uow:
         try:
-            ref_lote = servicos.alocar(*linha, uow)
-        except (modelo.SemEstoque, servicos.SkuInvalido) as e:
-            return {'message': str(e)}, 400
+            evento = eventos.AlocacaoRequerida(*linha)
+            resultados = messagebus.handle(evento, uow)
+            ref_lote = resultados.pop(0)
+        except handlers.SkuInvalido as e:
+            return {"message": str(e)}, 400
 
-    return {'ref_lote': ref_lote}
+    return {"ref_lote": ref_lote}

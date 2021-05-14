@@ -8,7 +8,7 @@ tests: up
 	docker-compose run --rm --no-deps --entrypoint="python3 -m pytest" api /tests/unidade /tests/integracao /tests/e2e
 
 unit-tests:
-	docker-compose run --rm --no-deps --entrypoint="python3 -m pytest" api /tests/unidade
+	docker-compose run --rm --no-deps --entrypoint="python3 -m pytest" api /tests/unidade -v -s
 
 integration-tests: up
 	docker-compose run --rm --no-deps --entrypoint="python3 -m pytest" api /tests/integracao
