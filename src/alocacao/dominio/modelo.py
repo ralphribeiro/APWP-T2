@@ -1,9 +1,9 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
-from typing import Optional
+from typing import Optional, Union
 
-from . import eventos
+from . import eventos, comandos
 
 
 class SemEstoque(Exception):
@@ -15,13 +15,13 @@ class Produto:
         self.sku = sku
         self.lotes = lotes
         self.versao = versao
-        self.eventos: list[eventos.Evento] = []
+        self.mensagens: list[Union[eventos.Evento, comandos.Comando]] = []
 
     def alocar(self, linha: LinhaPedido) -> str:
         try:
             lote = next(l for l in sorted(self.lotes) if l.pode_alocar(linha))
         except StopIteration:
-            self.eventos.append(eventos.SemEstoque(sku=linha.sku))
+            self.mensagens.append(eventos.SemEstoque(sku=linha.sku))
             return None
         else:
             lote.alocar(linha)
@@ -33,7 +33,7 @@ class Produto:
         lote.altera_qtd(qtd_nova)        
         while qtd_nova > lote.quantidade_disponivel:
             linha = lote.desalocar_um()
-            self.eventos.append(eventos.AlocacaoRequerida(
+            self.mensagens.append(comandos.Alocar(
                 linha.pedido_id, linha.sku, linha.qtd
             ))
         return lote.ref

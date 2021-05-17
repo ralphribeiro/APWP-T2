@@ -62,4 +62,4 @@ def start_mappers():
 
 @event.listens_for(modelo.Produto, "load")
 def receive_load(produto, _):
-    produto.eventos = []
+    produto.mensagens = []

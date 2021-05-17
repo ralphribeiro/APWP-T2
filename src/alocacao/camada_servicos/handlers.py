@@ -1,38 +1,36 @@
-from datetime import date
-from typing import Optional
-
-from alocacao.dominio import modelo, eventos
+from alocacao.dominio import modelo, eventos, comandos
 from alocacao.camada_servicos import unit_of_work
 from alocacao.adapters import email
+
 
 class SkuInvalido(Exception):
     ...
 
 
 def adiciona_lote(
-    evento: eventos.LoteCriado,
+    comando: comandos.CriarLote,
     uow: unit_of_work.AbstractUOW
 ):
     with uow:
-        produto = uow.produtos.get(sku=evento.sku)
+        produto = uow.produtos.get(sku=comando.sku)
         if produto is None:
-            produto = modelo.Produto(evento.sku, lotes=[])
+            produto = modelo.Produto(comando.sku, lotes=[])
             uow.produtos.add(produto)
         produto.lotes.append(modelo.Lote(
-            evento.ref, evento.sku, evento.qtd, evento.eta
+            comando.ref, comando.sku, comando.qtd, comando.eta
         ))
         uow.commit()
 
 
 def alocar(
-    evento: eventos.AlocacaoRequerida,
+    comando: comandos.Alocar,
     uow: unit_of_work.AbstractUOW
 ) -> str:
-    linha = modelo.LinhaPedido(evento.pedido_id, evento.sku, evento.qtd)
+    linha = modelo.LinhaPedido(comando.pedido_id, comando.sku, comando.qtd)
     with uow:
-        produto = uow.produtos.get(sku=evento.sku)
+        produto = uow.produtos.get(sku=comando.sku)
         if produto is None:
-            raise SkuInvalido(f'Sku inválido {evento.sku}')
+            raise SkuInvalido(f'Sku inválido {comando.sku}')
         ref_lote = produto.alocar(linha)
         uow.commit()
     return ref_lote
@@ -47,11 +45,12 @@ def envia_notificacao_sem_estoque(
         f'Fora de estoque for {evento.sku}'
     )
 
+
 def altera_qtd_lote(
-    evento: eventos.AlteradaQuantidadeLote,
+    comando: comandos.AlterarQuantidadeLote,
     uow: unit_of_work.AbstractUOW
 ):
     with uow:
-        produto = uow.produtos.get_by_ref(evento.ref)
-        produto.altera_qtd_lote(evento.ref, evento.qtd_nova)
+        produto = uow.produtos.get_by_ref(comando.ref)
+        produto.altera_qtd_lote(comando.ref, comando.qtd_nova)
         uow.commit()

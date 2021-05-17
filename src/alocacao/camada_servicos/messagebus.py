@@ -1,30 +1,73 @@
-from typing import Protocol, Callable
+from logging import Logger
+from typing import Union
 
-from alocacao.dominio import eventos
+from tenacity import (
+    Retrying, RetryError, stop_after_attempt, wait_random_exponential
+)
+
+from alocacao.dominio import comandos, eventos
 from alocacao.camada_servicos import handlers, unit_of_work
 
 
-class AbstractMessageBus(Protocol):
-    HANDLERS: dict[type[eventos.Evento], type[list[Callable]]]
+logger = Logger(__name__)
+Message = Union[comandos.Comando, eventos.Evento]
 
-    def handle(event: eventos.Evento, uow: unit_of_work.AbstractUOW):
-        ...
-        
 
-def handle(event: eventos.Evento, uow: unit_of_work.AbstractUOW):
-    queue = [event]
+def handle(message: Message, uow: unit_of_work.AbstractUOW):
+    queue = [message]
     results = []
     while queue:
-        event = queue.pop(0)
-        for handler in HANDLERS[type(event)]:
-            results.append(handler(event, uow))
-            queue.extend(uow.collect_new_events())
+        message = queue.pop(0)
+        if isinstance(message, eventos.Evento):
+            handle_event(message, queue, uow)
+        if isinstance(message, comandos.Comando):
+            cmd_result = handle_command(message, queue, uow)
+            results.append(cmd_result)
+        else:
+            raise Exception(f'{message} não é um commando ou evento')
+
     return results
 
 
-HANDLERS = {
+def handle_event(
+    event: eventos.Evento,
+    queue: list[Message],
+    uow: unit_of_work.AbstractUOW
+):
+    for handler in EVENT_HANDLERS[type(event)]:
+        try:
+            logger.debug(
+                'manipulando evento %s com o %s', event, handler
+            )
+            handler(event, uow)
+            queue.extend(uow.collect_new_messages())
+        except Exception:
+            logger.exception('Exceção ao manipular o evento %s', event)
+            continue
+
+
+def handle_command(
+    command: comandos.Comando,
+    queue: list[Message],
+    uow: unit_of_work.AbstractUOW
+):
+    logger.debug('manipulando o comando %s', command)
+    try:
+        handler = COMMAND_HANDLERS[type(command)]
+        result = handler(command, uow)
+        queue.extend(uow.collect_new_messages())
+        return result
+    except Exception:
+        logger.exception('Exceção ao manipular o comando %s', command)
+        raise
+
+
+EVENT_HANDLERS = {
     eventos.SemEstoque: [handlers.envia_notificacao_sem_estoque],
-    eventos.LoteCriado: [handlers.adiciona_lote],
-    eventos.AlocacaoRequerida: [handlers.alocar],
-    eventos.AlteradaQuantidadeLote: [handlers.altera_qtd_lote],
+}
+
+COMMAND_HANDLERS = {
+    comandos.CriarLote: handlers.adiciona_lote,
+    comandos.Alocar: handlers.alocar,
+    comandos.AlterarQuantidadeLote: handlers.altera_qtd_lote,
 }

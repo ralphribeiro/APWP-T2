@@ -1,8 +1,8 @@
-"""produtos
+"""produtos.mensagens
 
-Revision ID: 98d26f257516
+Revision ID: 187b8e5138d0
 Revises: 
-Create Date: 2021-05-07 19:29:37.064793
+Create Date: 2021-05-17 14:23:49.031276
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '98d26f257516'
+revision = '187b8e5138d0'
 down_revision = None
 branch_labels = None
 depends_on = None
