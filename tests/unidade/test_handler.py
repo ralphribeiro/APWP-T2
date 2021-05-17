@@ -46,6 +46,16 @@ class FakeUOW(unit_of_work.AbstractUOW):
     def rollback(self):
         ...
 
+class FakeUOWWithFakeMsgBus(FakeUOW):
+    def __init__(self):
+        super().__init__()
+        self.events_published: list[eventos.Evento] = []
+
+    def publish_events(self):
+        for produto in self.produtos.seen:
+            while produto.events:
+                self.events_published.append(produto.eventos.pop(0))
+
 
 def obtem_data(arg: str):
     param = {'ontem': -1, 'hoje': 0, 'amanha': 1}
@@ -121,3 +131,58 @@ class TestAlteraQuantidadeLote:
         )
 
         assert lote.quantidade_disponivel == 66
+
+    def test_realocar_se_necessario(self):
+        uow = FakeUOW()
+
+        evts = [
+            eventos.LoteCriado('lote5', 'FONE', 55, None),
+            eventos.LoteCriado('lote6', 'FONE', 20, date.today()),
+            eventos.AlocacaoRequerida('pedido5', 'FONE', 10),
+            eventos.AlocacaoRequerida('pedido6', 'FONE', 10)
+        ]
+
+        for e in evts:
+            messagebus.handle(e, uow)
+        
+        [lote1, lote2] = uow.produtos.get('FONE').lotes
+
+        assert lote1.quantidade_disponivel == 35
+        assert lote2.quantidade_disponivel == 20
+
+        messagebus.handle(
+            eventos.AlteradaQuantidadeLote('lote5', 15),
+            uow
+        )
+
+        assert lote1.quantidade_disponivel == 5
+        assert lote2.quantidade_disponivel == 10
+
+    def test_realocar_se_necessario_isolado(self):
+        uow = FakeUOWWithFakeMsgBus()
+
+        evts = [
+            eventos.LoteCriado('lote5', 'FONE', 55, None),
+            eventos.LoteCriado('lote6', 'FONE', 20, date.today()),
+            eventos.AlocacaoRequerida('pedido5', 'FONE', 10),
+            eventos.AlocacaoRequerida('pedido6', 'FONE', 10)
+        ]
+
+        for e in evts:
+            messagebus.handle(e, uow)
+        
+        [lote1, lote2] = uow.produtos.get('FONE').lotes
+
+        assert lote1.quantidade_disponivel == 35
+        assert lote2.quantidade_disponivel == 20
+
+        messagebus.handle(
+            eventos.AlteradaQuantidadeLote('lote5', 15),
+            uow
+        )
+
+        [evento_realocacao] = uow.events_published
+
+        assert isinstance(evento_realocacao, eventos.AlocacaoRequerida)
+        assert evento_realocacao.pedido_id in ['lote5', 'lote6']
+        assert evento_realocacao.sku == 'FONE'

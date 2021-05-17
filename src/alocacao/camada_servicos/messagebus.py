@@ -1,6 +1,15 @@
-from alocacao.dominio import eventos
-from alocacao.camada_servicos import unit_of_work, handlers
+from typing import Protocol, Callable
 
+from alocacao.dominio import eventos
+from alocacao.camada_servicos import handlers, unit_of_work
+
+
+class AbstractMessageBus(Protocol):
+    HANDLERS: dict[type[eventos.Evento], type[list[Callable]]]
+
+    def handle(event: eventos.Evento, uow: unit_of_work.AbstractUOW):
+        ...
+        
 
 def handle(event: eventos.Evento, uow: unit_of_work.AbstractUOW):
     queue = [event]

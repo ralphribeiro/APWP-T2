@@ -23,13 +23,23 @@ class SQLAlchemyRepository
     get() -> Produto
 }
 
-class UOW
+abstract UOW
+{
+    produtos: AbstractRepository
+}
+
+class SQLAlchemyUOW 
+{
+
+}
 
 AbstractRepository .. Produto
 TrackingRepository .. Produto
 SQLAlchemyRepository o-- Produto
 TrackingRepository o-- AbstractRepository
-UOW o-- SQLAlchemyRepository
-UOW o-- TrackingRepository
+UOW <|-- SQLAlchemyUOW
+SQLAlchemyUOW o-- SQLAlchemyRepository
+SQLAlchemyUOW o-- TrackingRepository
+UOW o-- AbstractRepository
 
 @enduml

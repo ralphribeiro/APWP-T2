@@ -19,9 +19,7 @@ class Produto:
 
     def alocar(self, linha: LinhaPedido) -> str:
         try:
-            lote = next(
-                l for l in sorted(self.lotes) if l.pode_alocar(linha)
-            )
+            lote = next(l for l in sorted(self.lotes) if l.pode_alocar(linha))
         except StopIteration:
             self.eventos.append(eventos.SemEstoque(sku=linha.sku))
             return None
@@ -32,7 +30,12 @@ class Produto:
 
     def altera_qtd_lote(self, ref, qtd_nova):
         lote = next((lt for lt in self.lotes if lt.ref == ref), None)
-        lote.altera_qtd(qtd_nova)
+        lote.altera_qtd(qtd_nova)        
+        while qtd_nova > lote.quantidade_disponivel:
+            linha = lote.desalocar_um()
+            self.eventos.append(eventos.AlocacaoRequerida(
+                linha.pedido_id, linha.sku, linha.qtd
+            ))
         return lote.ref
 
 
@@ -44,13 +47,7 @@ class LinhaPedido:
 
 
 class Lote:
-    def __init__(
-        self,
-        ref: str,
-        sku: str,
-        qtd: int,
-        eta: Optional[date]
-    ):
+    def __init__(self, ref: str, sku: str, qtd: int, eta: Optional[date]):
         self.ref = ref
         self.sku = sku
         self.eta = eta
@@ -58,7 +55,7 @@ class Lote:
         self._alocacoes: set[LinhaPedido] = set()
 
     def __repr__(self) -> str:
-        return f'<lote {self.ref}>'
+        return f"<lote {self.ref}>"
 
     def __gt__(self, other):
         if self.eta is None:
@@ -82,10 +79,11 @@ class Lote:
     def desalocar(self, linha: LinhaPedido):
         self._alocacoes.discard(linha)
 
+    def desalocar_um(self) -> LinhaPedido:
+        return self._alocacoes.pop()
+
     def pode_alocar(self, linha: LinhaPedido):
-        return (
-            self.sku == linha.sku and self.quantidade_disponivel >= linha.qtd
-        )
+        return self.sku == linha.sku and self.quantidade_disponivel >= linha.qtd
 
     def altera_qtd(self, qtd_nova):
         self._qtd_comprada = qtd_nova
