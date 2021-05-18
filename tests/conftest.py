@@ -1,12 +1,15 @@
+from pathlib import Path
+import shutil
+import subprocess
 import time
 
-from pathlib import Path
 import pytest
 import requests
 from requests.exceptions import ConnectionError
-from sqlalchemy.exc import OperationalError
+import redis
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, clear_mappers
+from tenacity import retry, stop_after_delay
 
 from alocacao.adapters.orm import metadata, start_mappers
 from alocacao import config
@@ -30,26 +33,22 @@ def mappers():
     yield
     clear_mappers()
 
+
+@retry(stop=stop_after_delay(10))
 def wait_for_postgres_to_come_up(engine):
-    deadline = time.time() + 10
-    while time.time() < deadline:
-        try:
-            return engine.connect()
-        except OperationalError:
-            time.sleep(0.5)
-    pytest.fail('Postgres never came up')
+    return engine.connect()
 
 
+@retry(stop=stop_after_delay(10))
 def wait_for_webapp_to_come_up():
-    deadline = time.time() + 10
     url = config.get_api_url()
-    while time.time() < deadline:
-        try:
-            ret = requests.get(f'{url}/')
-            return ret
-        except ConnectionError as e:
-            time.sleep(0.5)
-    pytest.fail('API never came up')
+    return requests.get(f'{url}/')
+
+
+@retry(stop=stop_after_delay(10))
+def wait_for_redis_to_come_up():
+    r = redis.Redis(**config.get_redis_host_and_port())
+    return r.ping()
 
 
 @pytest.fixture(scope="session")
@@ -75,3 +74,15 @@ def restart_api():
     (Path(__file__).parent / '../src/alocacao/aplicacao/flask_app.py').touch()
     time.sleep(0.5)
     wait_for_webapp_to_come_up()
+
+
+@pytest.fixture
+def restart_redis_pubsub():
+    wait_for_redis_to_come_up()
+    if not shutil.which("docker-compose"):
+        print("skipping restart, assumes running in container")
+        return
+    subprocess.run(
+        ["docker-compose", "restart", "-t", "0", "redis_pubsub"],
+        check=True,
+    )

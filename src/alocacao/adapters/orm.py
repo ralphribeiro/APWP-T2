@@ -57,9 +57,10 @@ def start_mappers():
             )
         },
     )
-    mapper(modelo.Produto, produtos, properties={"lotes": relationship(lotes_mapper)})
+    mapper(modelo.Produto, produtos, properties={
+           "lotes": relationship(lotes_mapper)})
 
 
 @event.listens_for(modelo.Produto, "load")
 def receive_load(produto, _):
-    produto.mensagens = []
+    produto.eventos = []

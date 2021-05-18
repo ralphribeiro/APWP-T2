@@ -1,22 +1,42 @@
 version: "3"
 
 services:
-  api:
+  redis_pubsub:
     build:
       context: .
       dockerfile: Dockerfile
+    image: allocation-image
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - DB_HOST=postgres
+      - DB_PASSWORD=abc123
+      - REDIS_HOST=redis
+      - PYTHONDONTWRITEBYTECODE=1
+    volumes:
+      - ./src:/src
+      - ./tests:/tests
+    entrypoint:
+      - python
+      - alocacao/aplicacao/redis_eventconsumer.py
+        
+  api:
     image: alocacao-imagem
+    depends_on:
+      - redis_pubsub
     environment:
       - DB_HOST=postgres
       - DB_PASSWORD=abc123
       - API_HOST=api
+      - REDIS_HOST=redis
       - PYTHONDONTWRITEBYTECODE=1
       - FLASK_APP=alocacao/aplicacao/flask_app.py
       - FLASK_DEBUG=1
       - PYTHONUNBUFFERED=1
     volumes:
       - ./src:/src
-      - ./tests:/tests   
+      - ./tests:/tests
     # entrypoint:
     #   - gunicorn 
     #   - alocacao.aplicacao.flask_app:app
@@ -49,4 +69,9 @@ services:
     depends_on:
       - postgres
     ports:
-      - "5050:5050"    
+      - "5050:5050"
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "63791:6379"

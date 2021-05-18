@@ -20,7 +20,7 @@ def handle(message: Message, uow: unit_of_work.AbstractUOW):
         message = queue.pop(0)
         if isinstance(message, eventos.Evento):
             handle_event(message, queue, uow)
-        if isinstance(message, comandos.Comando):
+        elif isinstance(message, comandos.Comando):
             cmd_result = handle_command(message, queue, uow)
             results.append(cmd_result)
         else:
@@ -64,6 +64,7 @@ def handle_command(
 
 EVENT_HANDLERS = {
     eventos.SemEstoque: [handlers.envia_notificacao_sem_estoque],
+    eventos.Alocado: [handlers.publica_evento_alocado],
 }
 
 COMMAND_HANDLERS = {

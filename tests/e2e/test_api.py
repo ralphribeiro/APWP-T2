@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date
 
 import pytest
 import requests
@@ -67,7 +67,7 @@ def test_caminho_feliz_api_retorna_201_e_lotes_alocados():
 
 
 @pytest.mark.usefixtures('postgres_db')
-@ pytest.mark.usefixtures('restart_api')
+@pytest.mark.usefixtures('restart_api')
 def test_path_errado_retorna_mensagem_de_erro_e_400():
     sku_desconhecido, pedido_id = sku_aleatorio(), id_pedido_aleatorio()
     dados = {'pedido_id': pedido_id, 'sku': sku_desconhecido, 'qtd': 15}

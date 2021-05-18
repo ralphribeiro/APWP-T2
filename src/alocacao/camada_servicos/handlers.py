@@ -1,6 +1,7 @@
-from alocacao.dominio import modelo, eventos, comandos
-from alocacao.camada_servicos import unit_of_work
 from alocacao.adapters import email
+from alocacao.aplicacao import redis_eventpublisher
+from alocacao.camada_servicos import unit_of_work
+from alocacao.dominio import modelo, eventos, comandos
 
 
 class SkuInvalido(Exception):
@@ -36,6 +37,16 @@ def alocar(
     return ref_lote
 
 
+def altera_qtd_lote(
+    comando: comandos.AlterarQuantidadeLote,
+    uow: unit_of_work.AbstractUOW
+):
+    with uow:
+        produto = uow.produtos.get_by_ref(comando.ref)
+        produto.altera_qtd_lote(comando.ref, comando.qtd_nova)
+        uow.commit()
+
+
 def envia_notificacao_sem_estoque(
     evento: eventos.SemEstoque,
     uow: unit_of_work.AbstractUOW
@@ -46,11 +57,8 @@ def envia_notificacao_sem_estoque(
     )
 
 
-def altera_qtd_lote(
-    comando: comandos.AlterarQuantidadeLote,
+def publica_evento_alocado(
+    evento: eventos.Alocado,
     uow: unit_of_work.AbstractUOW
 ):
-    with uow:
-        produto = uow.produtos.get_by_ref(comando.ref)
-        produto.altera_qtd_lote(comando.ref, comando.qtd_nova)
-        uow.commit()
+    redis_eventpublisher.publish('linha_alocada', evento)

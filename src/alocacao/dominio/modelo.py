@@ -15,17 +15,20 @@ class Produto:
         self.sku = sku
         self.lotes = lotes
         self.versao = versao
-        self.mensagens: list[Union[eventos.Evento, comandos.Comando]] = []
+        self.eventos: list[eventos.Evento] = []
 
     def alocar(self, linha: LinhaPedido) -> str:
         try:
             lote = next(l for l in sorted(self.lotes) if l.pode_alocar(linha))
         except StopIteration:
-            self.mensagens.append(eventos.SemEstoque(sku=linha.sku))
+            self.eventos.append(eventos.SemEstoque(sku=linha.sku))
             return None
         else:
             lote.alocar(linha)
             self.versao += 1
+            self.eventos.append(eventos.Alocado(
+                linha.pedido_id, linha.sku, linha.qtd, lote.ref
+            ))
             return lote.ref
 
     def altera_qtd_lote(self, ref, qtd_nova):
@@ -33,7 +36,7 @@ class Produto:
         lote.altera_qtd(qtd_nova)        
         while qtd_nova > lote.quantidade_disponivel:
             linha = lote.desalocar_um()
-            self.mensagens.append(comandos.Alocar(
+            self.eventos.append(comandos.Alocar(
                 linha.pedido_id, linha.sku, linha.qtd
             ))
         return lote.ref

@@ -3,7 +3,7 @@ from datetime import date
 from flask import Flask, request
 
 from alocacao.adapters import orm
-from alocacao.dominio import eventos, comandos
+from alocacao.dominio import comandos
 from alocacao.camada_servicos import handlers, messagebus, unit_of_work
 
 
@@ -35,7 +35,9 @@ def adiciona_lote_endpoint():
 
 @app.route("/alocar", methods=["POST"])
 def alocar_endpoint():
-    linha = (request.json["pedido_id"], request.json["sku"], request.json["qtd"])
+    linha = (
+        request.json["pedido_id"], request.json["sku"], request.json["qtd"]
+    )
     with unit_of_work.SQLAlchemyUOW() as uow:
         try:
             comando = comandos.Alocar(*linha)
@@ -44,4 +46,4 @@ def alocar_endpoint():
         except handlers.SkuInvalido as e:
             return {"message": str(e)}, 400
 
-    return {"ref_lote": ref_lote}
+    return {"ref_lote": ref_lote}, 201

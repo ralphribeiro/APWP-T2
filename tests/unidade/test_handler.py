@@ -54,8 +54,8 @@ class FakeUOWWithFakeMsgBus(FakeUOW):
 
     def publish_events(self):
         for produto in self.produtos.seen:
-            while produto.mensagens:
-                self.msgs_published.append(produto.mensagens.pop(0))
+            while produto.eventos:
+                self.msgs_published.append(produto.eventos.pop(0))
 
 
 def obtem_data(arg: str):

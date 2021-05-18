@@ -11,14 +11,14 @@ def post_insere_lote(ref, sku, qtd, eta):
     assert r.status_code == 201
 
 
-def post_aloca(orderid, sku, qty, sucesso_esperado=True):
+def post_aloca(orderid, sku, qtd, sucesso_esperado=True):
     url = config.get_api_url()
     r = requests.post(
         f"{url}/alocar",
         json={
             "pedido_id": orderid,
             "sku": sku,
-            "qty": qty,
+            "qtd": qtd,
         },
     )
     if sucesso_esperado:

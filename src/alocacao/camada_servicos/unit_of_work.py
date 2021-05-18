@@ -19,9 +19,8 @@ class AbstractUOW(abc.ABC):
 
     def collect_new_messages(self):
         for produto in self.produtos.seen:
-            print(10*'+', produto)
-            while produto.mensagens:
-                yield produto.mensagens.pop(0)
+            while produto.eventos:
+                yield produto.eventos.pop(0)
 
     @abc.abstractmethod
     def _commit(self):

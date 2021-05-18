@@ -11,5 +11,5 @@ def test_registra_um_evento_fora_de_estoque_quando_nao_for_possivel_alocar():
     alocacao = produto.alocar(linha2)
 
 
-    assert produto.mensagens[-1] == eventos.SemEstoque(sku='RELOGIO')
+    assert produto.eventos[-1] == eventos.SemEstoque(sku='RELOGIO')
     assert alocacao is None
