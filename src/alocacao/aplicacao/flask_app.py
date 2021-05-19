@@ -1,7 +1,8 @@
 from datetime import date
 
-from flask import Flask, request
+from flask import Flask, jsonify, request
 
+from alocacao import views
 from alocacao.adapters import orm
 from alocacao.dominio import comandos
 from alocacao.camada_servicos import handlers, messagebus, unit_of_work
@@ -47,3 +48,12 @@ def alocar_endpoint():
             return {"message": str(e)}, 400
 
     return {"ref_lote": ref_lote}, 201
+
+
+@app.route("/alocacao/<pedido_id>", methods=["GET"])
+def  obtem_alocacao(pedido_id):
+    with unit_of_work.SQLAlchemyUOW() as uow:
+        result = views.alocacoes(pedido_id, uow)
+        if not result:
+            return 'not found', 404
+        return jsonify(result), 200

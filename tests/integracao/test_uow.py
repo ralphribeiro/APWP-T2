@@ -4,7 +4,9 @@ import traceback
 
 from pytest import raises, mark
 
-from ..suporte_testes import id_pedido_aleatorio, ref_lote_aleatorio, sku_aleatorio
+from ..suporte_testes import(
+    id_pedido_aleatorio, ref_lote_aleatorio, sku_aleatorio
+)
 from alocacao.camada_servicos import unit_of_work
 from alocacao.dominio import modelo
 

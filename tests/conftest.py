@@ -27,6 +27,24 @@ def sqlite_session_factory(in_memory_sqlite_db):
     yield sessionmaker(bind=in_memory_sqlite_db)
 
 
+@pytest.fixture(scope="session")
+def postgres_db():
+    engine = create_engine(config.get_postgres_uri())
+    wait_for_postgres_to_come_up(engine)
+    metadata.create_all(engine)
+    return engine
+
+
+@pytest.fixture
+def postgres_session_factory(postgres_db):
+    yield sessionmaker(bind=postgres_db)
+
+
+@pytest.fixture
+def postgres_session(postgres_session_factory):
+    return postgres_session_factory()
+
+
 @pytest.fixture
 def mappers():
     start_mappers()
@@ -49,24 +67,6 @@ def wait_for_webapp_to_come_up():
 def wait_for_redis_to_come_up():
     r = redis.Redis(**config.get_redis_host_and_port())
     return r.ping()
-
-
-@pytest.fixture(scope="session")
-def postgres_db():
-    engine = create_engine(config.get_postgres_uri())
-    wait_for_postgres_to_come_up(engine)
-    metadata.create_all(engine)
-    return engine
-
-
-@pytest.fixture
-def postgres_session_factory(postgres_db):
-    yield sessionmaker(bind=postgres_db)
-
-
-@pytest.fixture
-def postgres_session(postgres_session_factory):
-    return postgres_session_factory()
 
 
 @pytest.fixture
