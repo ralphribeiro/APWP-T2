@@ -64,7 +64,10 @@ def handle_command(
 
 EVENT_HANDLERS = {
     eventos.SemEstoque: [handlers.envia_notificacao_sem_estoque],
-    eventos.Alocado: [handlers.publica_evento_alocado],
+    eventos.Alocado: [
+        handlers.publica_evento_alocado,
+        handlers.adiciona_alocacao_ao_modelo_view
+    ],
 }
 
 COMMAND_HANDLERS = {

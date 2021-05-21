@@ -62,3 +62,20 @@ def publica_evento_alocado(
     uow: unit_of_work.AbstractUOW
 ):
     redis_eventpublisher.publish('linha_alocada', evento)
+
+
+def adiciona_alocacao_ao_modelo_view(
+    evento: eventos.Alocado,
+    uow: unit_of_work.SQLAlchemyUOW
+):
+    with uow:
+        uow.session.execute(
+            'INSERT INTO alocacoes_view (pedido_id, sku, ref_lote) '
+            'VALUES (:pedido_id, :sku, :ref_lote)',
+            dict(
+                pedido_id=evento.pedido_id,
+                sku=evento.sku,
+                ref_lote=evento.ref_lote
+            )
+        )
+        uow.commit()

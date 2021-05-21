@@ -4,6 +4,7 @@ from sqlalchemy.sql.schema import Column, ForeignKey, MetaData, Table
 from sqlalchemy.sql.sqltypes import Integer, String, Date
 
 from alocacao.dominio import modelo
+from alocacao import views
 
 metadata = MetaData()
 
@@ -43,6 +44,13 @@ produtos = Table(
     Column("versao", Integer, nullable=False),
 )
 
+alocacoes_view = Table(
+    "alocacoes_view",
+    metadata,
+    Column("pedido_id", String(255)),
+    Column("sku", String(255)),
+    Column("ref_lote", String(255))
+)
 
 def start_mappers():
     linhas_mapper = mapper(modelo.LinhaPedido, linhas_pedido)
