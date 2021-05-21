@@ -1,3 +1,5 @@
+from dataclasses import asdict
+
 from alocacao.adapters import email
 from alocacao.aplicacao import redis_eventpublisher
 from alocacao.camada_servicos import unit_of_work
@@ -37,6 +39,17 @@ def alocar(
     return ref_lote
 
 
+def realocar(
+    evento: eventos.Desalocado,
+    uow: unit_of_work.SQLAlchemyUOW
+):
+    # print(10*'_-')
+    with uow:
+        produto = uow.produtos.get(sku=evento.sku)
+        produto.eventos.append(comandos.Alocar(**asdict(evento)))
+        uow.commit()
+
+
 def altera_qtd_lote(
     comando: comandos.AlterarQuantidadeLote,
     uow: unit_of_work.AbstractUOW
@@ -64,7 +77,7 @@ def publica_evento_alocado(
     redis_eventpublisher.publish('linha_alocada', evento)
 
 
-def adiciona_alocacao_ao_modelo_view(
+def adiciona_alocacao_ao_modelo_de_leitura(
     evento: eventos.Alocado,
     uow: unit_of_work.SQLAlchemyUOW
 ):
@@ -77,5 +90,18 @@ def adiciona_alocacao_ao_modelo_view(
                 sku=evento.sku,
                 ref_lote=evento.ref_lote
             )
+        )
+        uow.commit()
+
+
+def remove_alocacao_do_modelo_de_leitura(
+    evento: eventos.Desalocado,
+    uow: unit_of_work.SQLAlchemyUOW
+):
+    with uow:
+        uow.session.execute(
+            'DELETE FROM alocacoes_view '
+            'WHERE pedido_id=:pedido_id AND sku=:sku',
+            dict(pedido_id=evento.pedido_id, sku=evento.sku)
         )
         uow.commit()

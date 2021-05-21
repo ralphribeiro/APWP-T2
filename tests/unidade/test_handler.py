@@ -158,32 +158,3 @@ class TestAlteraQuantidadeLote:
 
         assert lote1.quantidade_disponivel == 5
         assert lote2.quantidade_disponivel == 10
-
-    # def test_realocar_se_necessario_isolado(self):
-    #     uow = FakeUOWWithFakeMsgBus()
-
-    #     evts = [
-    #         eventos.LoteCriado('lote5', 'FONE', 55, None),
-    #         eventos.LoteCriado('lote6', 'FONE', 20, date.today()),
-    #         eventos.AlocacaoRequerida('pedido5', 'FONE', 10),
-    #         eventos.AlocacaoRequerida('pedido6', 'FONE', 10)
-    #     ]
-
-    #     for e in evts:
-    #         messagebus.handle(e, uow)
-        
-    #     [lote1, lote2] = uow.produtos.get('FONE').lotes
-
-    #     assert lote1.quantidade_disponivel == 35
-    #     assert lote2.quantidade_disponivel == 20
-
-    #     messagebus.handle(
-    #         eventos.AlteradaQuantidadeLote('lote5', 15),
-    #         uow
-    #     )
-
-    #     [evento_realocacao] = uow.events_published
-
-    #     assert isinstance(evento_realocacao, eventos.AlocacaoRequerida)
-    #     assert evento_realocacao.pedido_id in ['lote5', 'lote6']
-    #     assert evento_realocacao.sku == 'FONE'

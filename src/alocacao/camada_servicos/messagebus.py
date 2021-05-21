@@ -66,12 +66,16 @@ EVENT_HANDLERS = {
     eventos.SemEstoque: [handlers.envia_notificacao_sem_estoque],
     eventos.Alocado: [
         handlers.publica_evento_alocado,
-        handlers.adiciona_alocacao_ao_modelo_view
+        handlers.adiciona_alocacao_ao_modelo_de_leitura
+    ],
+    eventos.Desalocado: [
+        handlers.remove_alocacao_do_modelo_de_leitura,
+        handlers.realocar
     ],
 }
 
 COMMAND_HANDLERS = {
     comandos.CriarLote: handlers.adiciona_lote,
     comandos.Alocar: handlers.alocar,
-    comandos.AlterarQuantidadeLote: handlers.altera_qtd_lote,
+    comandos.AlterarQuantidadeLote: handlers.altera_qtd_lote
 }

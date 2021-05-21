@@ -16,3 +16,11 @@ class Alocado(Evento):
     sku: str
     qtd: int
     ref_lote: str
+
+
+@dataclass
+class Desalocado(Evento):
+    pedido_id: str
+    sku: str
+    qtd: int
+    
