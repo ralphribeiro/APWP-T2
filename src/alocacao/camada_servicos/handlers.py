@@ -1,6 +1,6 @@
 from dataclasses import asdict
 
-from alocacao.adapters import email
+from alocacao.adapters import notifications
 from alocacao.aplicacao import redis_eventpublisher
 from alocacao.camada_servicos import unit_of_work
 from alocacao.dominio import modelo, eventos, comandos
@@ -61,17 +61,16 @@ def altera_qtd_lote(
 
 def envia_notificacao_sem_estoque(
     evento: eventos.SemEstoque,
-    uow: unit_of_work.AbstractUOW
+    notifications: notifications.AbstractNotifications
 ):
-    email.send_mail(
+    notifications.send(
         'estoque@apwp-t2.com',
-        f'Fora de estoque for {evento.sku}'
+        f'Fora de estoque para {evento.sku}'
     )
 
 
 def publica_evento_alocado(
-    evento: eventos.Alocado,
-    uow: unit_of_work.AbstractUOW
+    evento: eventos.Alocado
 ):
     redis_eventpublisher.publish('linha_alocada', evento)
 

@@ -12,8 +12,8 @@ from alocacao.dominio import comandos
 def sqlite_bus(sqlite_session_factory):
     bus = bootstrap.bootstrap(
         start_orm=True,
-        uow=unit_of_work.TrackingUOW(SQLAlchemyUOW(sqlite_session_factory)),
-        send_mail=lambda *args: None,
+        uow=unit_of_work.SQLAlchemyUOW(sqlite_session_factory),
+        notifications=None,
         publish=lambda *args: None
     )
     yield bus

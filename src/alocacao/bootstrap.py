@@ -2,22 +2,26 @@ import inspect
 from typing import Callable
 
 
-from alocacao.adapters import email, orm
+from alocacao.adapters import orm
+from alocacao.adapters.notifications import (
+    AbstractNotifications, EmailNotifications
+)
 from alocacao.aplicacao import redis_eventpublisher
 from alocacao.camada_servicos import unit_of_work, messagebus, handlers
 
 
 def bootstrap(
     start_orm: bool = True,
-    uow: unit_of_work.AbstractUOW = unit_of_work.TrackingUOW(unit_of_work.SQLAlchemyUOW()),
-    send_mail: Callable = email.send_mail,
+    uow: unit_of_work.AbstractUOW = unit_of_work.SQLAlchemyUOW(),
+    notifications: AbstractNotifications = None,
     publish: Callable = redis_eventpublisher.publish
 ) -> messagebus.MessageBus:
 
     if start_orm:
         orm.start_mappers()
 
-    dependencies = {'uow': uow, 'send_mail': send_mail, 'publish': publish}
+    dependencies = {'uow': uow,
+                    'notifications': notifications, 'publish': publish}
 
     injected_event_handlers = {
         event_type: [
@@ -34,8 +38,8 @@ def bootstrap(
 
     return messagebus.MessageBus(
         uow=uow,
-        event_handers=injected_event_handlers,
-        command_handers=injected_command_handlers
+        event_handers=injected_event_handlers,  # type: ignore
+        command_handers=injected_command_handlers  # type: ignore
     )
 
 

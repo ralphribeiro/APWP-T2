@@ -1,11 +1,12 @@
+from collections import defaultdict
 from datetime import date, timedelta
 from typing import Union
 
 from pytest import raises
 
 from alocacao import bootstrap
-from alocacao.adapters import repository
-from alocacao.camada_servicos import handlers, messagebus, unit_of_work
+from alocacao.adapters import repository, notifications
+from alocacao.camada_servicos import handlers, unit_of_work
 from alocacao.dominio import comandos, eventos, modelo
 
 
@@ -28,13 +29,13 @@ class FakeRepository():  # adaptador
         return next(
             (produto for produto in self._produtos if produto.sku == sku),
             None
-        )
+        )  # type: ignore
 
     def get_by_ref(self, lote_ref) -> modelo.Produto:
         return next(
             (p for p in self._produtos for lt in p.lotes if lt.ref == lote_ref),
             None
-        )
+        )  # type: ignore
 
 
 class FakeUOW(unit_of_work.AbstractUOW):
@@ -55,16 +56,24 @@ class FakeUOWWithFakeMsgBus(FakeUOW):
         self.msgs_published: list[Union[eventos.Evento, comandos.Comando]] = []
 
     def publish_events(self):
-        for produto in self.produtos.seen:
+        for produto in self.produtos.seen:  # type: ignore
             while produto.eventos:
                 self.msgs_published.append(produto.eventos.pop(0))
+
+
+class FakeNotifications(notifications.AbstractNotifications):
+    def __init__(self):
+        self.sent = defaultdict(list)
+
+    def send(self, destination, message):
+        self.sent[destination].append(message)
 
 
 def bootstrap_tesp_app():
     return bootstrap.bootstrap(
         start_orm=False,
         uow=FakeUOW(),
-        send_mail=lambda *args: None,
+        notifications=FakeNotifications(),
         publish=lambda *args: None
     )
 
@@ -79,7 +88,7 @@ class TestAdicionaAlocacao:
         bus = bootstrap_tesp_app()
         bus.handle(comandos.CriarLote('l-1', 'UHUL', 10, None))
         assert bus.uow.produtos.get('UHUL')
-        assert bus.uow.commited
+        assert bus.uow.commited  # type: ignore
 
 
 class TestAllocate:
