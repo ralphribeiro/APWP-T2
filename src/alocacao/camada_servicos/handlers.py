@@ -43,7 +43,6 @@ def realocar(
     evento: eventos.Desalocado,
     uow: unit_of_work.SQLAlchemyUOW
 ):
-    # print(10*'_-')
     with uow:
         produto = uow.produtos.get(sku=evento.sku)
         produto.eventos.append(comandos.Alocar(**asdict(evento)))
@@ -105,3 +104,22 @@ def remove_alocacao_do_modelo_de_leitura(
             dict(pedido_id=evento.pedido_id, sku=evento.sku)
         )
         uow.commit()
+
+
+EVENT_HANDLERS = {
+    eventos.SemEstoque: [envia_notificacao_sem_estoque],
+    eventos.Alocado: [
+        publica_evento_alocado,
+        adiciona_alocacao_ao_modelo_de_leitura
+    ],
+    eventos.Desalocado: [
+        remove_alocacao_do_modelo_de_leitura,
+        realocar
+    ],
+}
+
+COMMAND_HANDLERS = {
+    comandos.CriarLote: adiciona_lote,
+    comandos.Alocar: alocar,
+    comandos.AlterarQuantidadeLote: altera_qtd_lote
+}

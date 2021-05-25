@@ -3,6 +3,7 @@ from typing import Union
 
 from pytest import raises
 
+from alocacao import bootstrap
 from alocacao.adapters import repository
 from alocacao.camada_servicos import handlers, messagebus, unit_of_work
 from alocacao.dominio import comandos, eventos, modelo
@@ -47,6 +48,7 @@ class FakeUOW(unit_of_work.AbstractUOW):
     def rollback(self):
         ...
 
+
 class FakeUOWWithFakeMsgBus(FakeUOW):
     def __init__(self):
         super().__init__()
@@ -58,6 +60,15 @@ class FakeUOWWithFakeMsgBus(FakeUOW):
                 self.msgs_published.append(produto.eventos.pop(0))
 
 
+def bootstrap_tesp_app():
+    return bootstrap.bootstrap(
+        start_orm=False,
+        uow=FakeUOW(),
+        send_mail=lambda *args: None,
+        publish=lambda *args: None
+    )
+
+
 def obtem_data(arg: str):
     param = {'ontem': -1, 'hoje': 0, 'amanha': 1}
     return date.today() + timedelta(days=param[arg])
@@ -65,77 +76,60 @@ def obtem_data(arg: str):
 
 class TestAdicionaAlocacao:
     def test_para_novo_produto(self):
-        uow = FakeUOW()
-        messagebus.handle(
-            comandos.CriarLote('l-1', 'UHUL', 10, None), uow
-        )
-        assert uow.produtos.get('UHUL')
-        assert uow.commited
+        bus = bootstrap_tesp_app()
+        bus.handle(comandos.CriarLote('l-1', 'UHUL', 10, None))
+        assert bus.uow.produtos.get('UHUL')
+        assert bus.uow.commited
 
 
 class TestAllocate:
     def test_retorna_alocacao(self):
-        uow = FakeUOW()
-        messagebus.handle(
-            comandos.CriarLote('l-2', 'GARRAFA-VAZIA', 54, None), uow
-        )
-        [resultado] = messagebus.handle(
-            comandos.Alocar('p-2', 'GARRAFA-VAZIA', 10), uow
-        )
+        bus = bootstrap_tesp_app()
+        bus.handle(comandos.CriarLote('l-2', 'GARRAFA-VAZIA', 54, None))
+        [resultado] = bus.handle(comandos.Alocar('p-2', 'GARRAFA-VAZIA', 10))
         assert resultado == 'l-2'
 
-    
     def test_para_sku_invalido(self):
+        bus = bootstrap_tesp_app()
         lote = ('l1', 'SOUND-BOX', 20, None)
         linha = ('p1', 'SKUINEXISTENTE', 2)
-        uow = FakeUOW()
-        messagebus.handle(comandos.CriarLote(*lote), uow)
+        bus.handle(comandos.CriarLote(*lote))
 
         with raises(handlers.SkuInvalido):
-            messagebus.handle(comandos.Alocar(*linha), uow)
-
+            bus.handle(comandos.Alocar(*linha))
 
     def test_preferir_lote_mais_antigo(self):
+        bus = bootstrap_tesp_app()
         sku = 'GARRAFA-VAZIA'
         lote_antigo = ('lote-antigo', sku, 20, obtem_data('ontem'))
         lote_atual = ('lote-atual', sku, 10, obtem_data('hoje'))
         lote_futuro = ('lote-futuro', sku, 30, obtem_data('amanha'))
         linha = ('pedido-001', sku, 5)
 
-        uow = FakeUOW()
+        bus.handle(comandos.CriarLote(*lote_antigo))
+        bus.handle(comandos.CriarLote(*lote_atual))
+        bus.handle(comandos.CriarLote(*lote_futuro))
 
-        messagebus.handle(comandos.CriarLote(*lote_antigo), uow)
-        messagebus.handle(comandos.CriarLote(*lote_atual), uow)
-        messagebus.handle(comandos.CriarLote(*lote_futuro), uow)
-        
-        [res] = messagebus.handle(comandos.Alocar(*linha), uow)
+        [res] = bus.handle(comandos.Alocar(*linha))
 
         assert res == 'lote-antigo'
 
 
 class TestAlteraQuantidadeLote:
     def test_altera_quantidade_disponivel(self):
-        uow = FakeUOW()
+        bus = bootstrap_tesp_app()
+        bus.handle(comandos.CriarLote('lote1', 'SARRAFO', 100, None))
 
-        messagebus.handle(
-            comandos.CriarLote('lote1', 'SARRAFO', 100, None),
-            uow
-        )
-
-        [lote] = uow.produtos.get('SARRAFO').lotes
+        [lote] = bus.uow.produtos.get('SARRAFO').lotes
 
         assert lote.quantidade_disponivel == 100
 
-        messagebus.handle(
-            comandos.AlterarQuantidadeLote('lote1', 66),
-            uow
-        )
+        bus.handle(comandos.AlterarQuantidadeLote('lote1', 66))
 
         assert lote.quantidade_disponivel == 66
 
     def test_realocar_se_necessario(self):
-        uow = FakeUOW()
-
+        bus = bootstrap_tesp_app()
         evts = [
             comandos.CriarLote('lote5', 'FONE', 55, None),
             comandos.CriarLote('lote6', 'FONE', 20, date.today()),
@@ -144,17 +138,14 @@ class TestAlteraQuantidadeLote:
         ]
 
         for e in evts:
-            messagebus.handle(e, uow)
-        
-        [lote1, lote2] = uow.produtos.get('FONE').lotes
+            bus.handle(e)
+
+        [lote1, lote2] = bus.uow.produtos.get('FONE').lotes
 
         assert lote1.quantidade_disponivel == 35
         assert lote2.quantidade_disponivel == 20
 
-        messagebus.handle(
-            comandos.AlterarQuantidadeLote('lote5', 15),
-            uow
-        )
+        bus.handle(comandos.AlterarQuantidadeLote('lote5', 15))
 
         assert lote1.quantidade_disponivel == 5
         assert lote2.quantidade_disponivel == 10
