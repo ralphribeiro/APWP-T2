@@ -19,10 +19,10 @@ class Produto:
 
     def alocar(self, linha: LinhaPedido) -> str:
         try:
-            lote = next(l for l in sorted(self.lotes) if l.pode_alocar(linha))
+            lote = next(l for l in sorted(self.lotes) if l.pode_alocar(linha))  # type: ignore
         except StopIteration:
             self.eventos.append(eventos.SemEstoque(sku=linha.sku))
-            return None
+            return None  # type: ignore
         else:
             lote.alocar(linha)
             self.versao += 1
@@ -33,13 +33,13 @@ class Produto:
 
     def altera_qtd_lote(self, ref, qtd_nova):
         lote = next((lt for lt in self.lotes if lt.ref == ref), None)
-        lote.altera_qtd(qtd_nova)
-        while qtd_nova > lote.quantidade_disponivel:
-            linha = lote.desalocar_um()
+        lote.altera_qtd(qtd_nova)  # type: ignore
+        while qtd_nova > lote.quantidade_disponivel:  # type: ignore
+            linha = lote.desalocar_um()  # type: ignore
             self.eventos.append(eventos.Desalocado(
                 linha.pedido_id, linha.sku, linha.qtd
             ))
-        return lote.ref
+        return lote.ref  # type: ignore
 
 
 @dataclass(unsafe_hash=True)
