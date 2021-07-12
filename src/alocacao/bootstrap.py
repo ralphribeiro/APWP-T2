@@ -3,9 +3,7 @@ from typing import Callable
 
 
 from alocacao.adapters import orm
-from alocacao.adapters.notifications import (
-    AbstractNotifications, EmailNotifications
-)
+from alocacao.adapters.notifications import AbstractNotifications
 from alocacao.aplicacao import redis_eventpublisher
 from alocacao.camada_servicos import unit_of_work, messagebus, handlers
 

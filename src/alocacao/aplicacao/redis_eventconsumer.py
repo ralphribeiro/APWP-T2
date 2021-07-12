@@ -4,7 +4,6 @@ import redis
 
 from alocacao import bootstrap, config
 from alocacao.dominio import comandos
-from alocacao.camada_servicos import messagebus, unit_of_work
 
 
 logger = Logger(__name__)

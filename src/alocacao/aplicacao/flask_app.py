@@ -3,9 +3,8 @@ from datetime import date
 from flask import Flask, jsonify, request
 
 from alocacao import bootstrap, views
-from alocacao.adapters import orm
 from alocacao.dominio import comandos
-from alocacao.camada_servicos import handlers, messagebus, unit_of_work
+from alocacao.camada_servicos import handlers
 
 
 app = Flask(__name__)
